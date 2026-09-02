@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($env:PATH = \"C:\\\\laragon\\\\bin\\\\php\\\\php-8.3.30-Win32-vs16-x64;\" + $env:PATH; cd C:\\\\laragon\\\\www\\\\InvoxPakistan; php artisan test --filter=\"BulkInvoiceCsvParserTest|BulkInvoiceUploadTest|ImportBulkInvoicesTest\" 2>&1 | Select-Object -Last 150)",
+      "PowerShell($env:PATH = \"C:\\\\laragon\\\\bin\\\\php\\\\php-8.3.30-Win32-vs16-x64;\" + $env:PATH; cd C:\\\\laragon\\\\www\\\\InvoxPakistan; php artisan test 2>&1 | Select-Object -Last 30; vendor\\\\bin\\\\pint --test 2>&1 | Select-Object -Last 30)",
+      "Bash(sort -t'#' -k2 -n -u)",
+      "PowerShell($env:PATH = \"C:\\\\laragon\\\\bin\\\\php\\\\php-8.3.30-Win32-vs16-x64;\" + $env:PATH; cd C:\\\\laragon\\\\www\\\\InvoxPakistan; php artisan tinker --execute=\"require 'C:\\\\Users\\\\MUHAMM~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--laragon-www-InvoxPakistan\\\\e4a5e437-a236-4e1e-845d-0fd52530995a\\\\scratchpad\\\\find_draft_id.php';\" 2>&1 | Select-Object -Last 20)",
+      "PowerShell($env:PATH = \"C:\\\\laragon\\\\bin\\\\php\\\\php-8.3.30-Win32-vs16-x64;\" + $env:PATH; cd C:\\\\laragon\\\\www\\\\InvoxPakistan; php artisan tinker --execute=\"require 'C:\\\\Users\\\\MUHAMM~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--laragon-www-InvoxPakistan\\\\e4a5e437-a236-4e1e-845d-0fd52530995a\\\\scratchpad\\\\cleanup_phase8.php';\" 2>&1 | Select-Object -Last 20)",
+      "Bash(rm -f \"/c/laragon/www/InvoxPakistan/.claude/launch.json\")",
+      "Bash(tasklist //FI \"IMAGENAME eq mysqld.exe\")",
+      "Bash(ls \"/c/laragon/bin/mysql/\" 2>&1)"
+    ]
+  }
+}

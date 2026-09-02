@@ -1,0 +1,311 @@
+/*
+ * Invox Pakistan — Admin panel theme.
+ *
+ * Deliberately a SEPARATE file from app.css (which layouts/company.blade.php
+ * also loads) and from company-theme.css (linked only from the Company
+ * side) — every rule here is scoped by the fact that only
+ * layouts/admin.blade.php links this stylesheet. Same design language as
+ * the Company reskin for brand consistency, but a distinct slate/charcoal
+ * accent (rather than Company's indigo) and a neutral page background,
+ * so the two panels are visually distinguishable at a glance — Admin
+ * carries elevated privileges, so that distinction is deliberate, not
+ * cosmetic. Plain CSS on purpose, no build step, loaded after Bootstrap
+ * so these rules can override its defaults by source order alone.
+ */
+
+:root {
+    --admin-accent: #33394b;
+    --admin-accent-dark: #23273a;
+    --admin-accent-rgb: 51, 57, 75;
+    --admin-navy: #1e2761;
+    --bg-page-admin: #f4f5f7;
+    --card-radius: .75rem;
+    --card-shadow: 0 2px 10px rgba(30, 39, 97, .06);
+    --table-head-bg: #eceef2;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--bg-page-admin) !important;
+    color: #333a56;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--admin-navy);
+}
+
+a {
+    color: var(--admin-accent);
+}
+
+a:hover {
+    color: var(--admin-accent-dark);
+}
+
+/* ---------- Top navbar ---------- */
+
+.admin-navbar {
+    background-color: #fff !important;
+    box-shadow: 0 1px 6px rgba(30, 39, 97, .08);
+}
+
+.admin-navbar .navbar-brand {
+    color: var(--admin-navy) !important;
+}
+
+.admin-navbar .admin-badge {
+    background-color: var(--admin-accent);
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    font-size: .7rem;
+    padding: .3em .65em;
+    border-radius: 50rem;
+    vertical-align: middle;
+}
+
+.admin-navbar .admin-user-name {
+    color: var(--admin-navy);
+    font-weight: 500;
+}
+
+.admin-navbar .logout-btn {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #eef0f4;
+    border: none;
+    color: var(--admin-accent);
+}
+
+.admin-navbar .logout-btn:hover {
+    background-color: #e2e5ec;
+    color: var(--admin-accent-dark);
+}
+
+.sidebar-toggle-btn {
+    border: 1px solid #e3e5f3;
+    color: var(--admin-navy);
+}
+
+/* ---------- Sidebar ---------- */
+
+.admin-sidebar {
+    background-color: #fff;
+}
+
+.admin-sidebar .list-group-item {
+    border: none;
+    color: #5b6178;
+    font-weight: 500;
+    border-left: 3px solid transparent;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.admin-sidebar .list-group-item i {
+    color: #9298b3;
+    transition: color .15s ease;
+}
+
+.admin-sidebar .list-group-item-action:hover {
+    background-color: #f6f6f8;
+    color: var(--admin-navy);
+}
+
+.admin-sidebar .list-group-item-action:hover i {
+    color: var(--admin-accent);
+}
+
+.admin-sidebar .list-group-item.active {
+    background-color: #eceef2;
+    border-left-color: var(--admin-accent);
+    color: var(--admin-accent-dark);
+    font-weight: 600;
+}
+
+.admin-sidebar .list-group-item.active i {
+    color: var(--admin-accent);
+}
+
+.admin-sidebar .offcanvas-header {
+    border-bottom: 1px solid #eef0f7;
+}
+
+/* Mobile (below 992px): guarantee the slide-in transition actually
+   reaches its open position — see the matching note in
+   company-theme.css for why this ID-specificity override is needed. */
+#adminSidebar.show {
+    transform: none !important;
+}
+
+/* Desktop (992px+): reset the offcanvas back to a normal, always-visible,
+   in-flow sidebar. Written explicitly rather than relying on Bootstrap's
+   `.offcanvas-lg` variant, which only performs this reset when the panel
+   is a descendant of a `.navbar-expand-lg` container (built for navbar
+   collapse menus) — this sidebar is a standalone panel, not nested
+   inside the navbar. */
+@media (min-width: 992px) {
+    #adminSidebar {
+        position: static !important;
+        top: auto !important;
+        left: auto !important;
+        z-index: auto !important;
+        width: 220px !important;
+        height: auto !important;
+        visibility: visible !important;
+        transform: none !important;
+        transition: none !important;
+        border-width: 0 1px 0 0 !important;
+    }
+
+    #adminSidebar .offcanvas-header {
+        display: none !important;
+    }
+
+    #adminSidebar .offcanvas-body {
+        display: block;
+        padding: 0;
+        overflow-y: visible;
+    }
+}
+
+/* ---------- Cards ---------- */
+
+.card {
+    border: none;
+    border-radius: var(--card-radius);
+    /* !important: matches .shadow-sm's own !important (all Bootstrap 5.3
+       utilities are) — without this, .shadow-sm always wins regardless
+       of selector/source order. */
+    box-shadow: var(--card-shadow) !important;
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #eef0f7;
+    font-weight: 600;
+    color: var(--admin-navy);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+/* ---------- Forms ---------- */
+
+.form-control,
+.form-select {
+    border-radius: .5rem;
+    border-color: #dde0e6;
+    padding-top: .55rem;
+    padding-bottom: .55rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--admin-accent);
+    box-shadow: 0 0 0 .2rem rgba(var(--admin-accent-rgb), .15);
+}
+
+.form-label {
+    color: var(--admin-navy);
+    font-weight: 500;
+}
+
+/* ---------- Tables ---------- */
+
+.table thead th {
+    background-color: var(--table-head-bg);
+    color: var(--admin-navy);
+    font-weight: 600;
+    border-bottom: none;
+    white-space: nowrap;
+}
+
+.table td, .table th {
+    vertical-align: middle;
+}
+
+/* ---------- Buttons ---------- */
+
+.btn {
+    border-radius: .5rem;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: var(--admin-accent);
+    border-color: var(--admin-accent);
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: var(--admin-accent-dark);
+    border-color: var(--admin-accent-dark);
+}
+
+.btn-outline-primary {
+    color: var(--admin-accent);
+    border-color: var(--admin-accent);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--admin-accent);
+    border-color: var(--admin-accent);
+}
+
+.text-primary {
+    color: var(--admin-accent) !important;
+}
+
+/* ---------- Modals ---------- */
+
+.modal-content {
+    border: none;
+    border-radius: var(--card-radius);
+    box-shadow: 0 10px 30px rgba(30, 39, 97, .15);
+}
+
+.modal-header {
+    border-bottom: 1px solid #eef0f7;
+}
+
+.modal-footer {
+    border-top: 1px solid #eef0f7;
+}
+
+/* ---------- Badges & alerts ---------- */
+
+.badge {
+    border-radius: 50rem;
+    font-weight: 500;
+    padding: .4em .75em;
+}
+
+.alert {
+    border: none;
+    border-radius: var(--card-radius);
+}
+
+/* ---------- Pagination ---------- */
+
+.page-link {
+    color: var(--admin-accent);
+}
+
+.page-item.active .page-link {
+    background-color: var(--admin-accent);
+    border-color: var(--admin-accent);
+}

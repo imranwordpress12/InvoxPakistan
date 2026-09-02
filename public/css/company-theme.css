@@ -1,0 +1,396 @@
+/*
+ * Invox Pakistan — Company Dashboard theme.
+ *
+ * Deliberately a SEPARATE file from app.css (which layouts/admin.blade.php
+ * also loads) — every rule here is scoped by the fact that only
+ * layouts/company.blade.php links this stylesheet. Admin/Super Admin
+ * views never load it, so nothing here can leak into that side of the
+ * app. Plain CSS on purpose, no build step, loaded after Bootstrap so
+ * these rules can override its defaults by source order alone (no
+ * !important anywhere below).
+ */
+
+:root {
+    --brand-indigo: #4b3fe4;
+    --brand-indigo-dark: #372fc0;
+    --brand-indigo-rgb: 75, 63, 228;
+    --brand-navy: #1e2761;
+    --bg-page: #f5f6fb;
+    --card-radius: .75rem;
+    --card-shadow: 0 2px 10px rgba(30, 39, 97, .06);
+
+    --soft-mint-bg: #d7f5e3;
+    --soft-mint-text: #1f7a4d;
+    --soft-mint-bg-hover: #c3eed4;
+
+    --soft-rose-bg: #fde0e0;
+    --soft-rose-text: #b3261e;
+    --soft-rose-bg-hover: #fbcaca;
+
+    --accent-coral: #ee6c4d;
+    --accent-coral-dark: #d85535;
+
+    --sidebar-active-bg: #eef0fd;
+    --table-head-bg: #eef0fa;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--bg-page) !important;
+    color: #333a56;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--brand-navy);
+}
+
+a {
+    color: var(--brand-indigo);
+}
+
+a:hover {
+    color: var(--brand-indigo-dark);
+}
+
+/* ---------- Top navbar ---------- */
+
+.company-navbar {
+    background-color: #fff !important;
+    box-shadow: 0 1px 6px rgba(30, 39, 97, .08);
+}
+
+.company-navbar .navbar-brand {
+    color: var(--brand-navy) !important;
+}
+
+.company-navbar .company-name {
+    color: var(--brand-navy);
+    font-weight: 600;
+    letter-spacing: .02em;
+}
+
+.company-navbar .logout-btn {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fdeceb;
+    border: none;
+    color: #c0392b;
+}
+
+.company-navbar .logout-btn:hover {
+    background-color: #fbdad8;
+    color: #a5301f;
+}
+
+.sidebar-toggle-btn {
+    border: 1px solid #e3e5f3;
+    color: var(--brand-navy);
+}
+
+/* ---------- Sidebar ---------- */
+
+.company-sidebar {
+    background-color: #fff;
+}
+
+.company-sidebar .list-group-item {
+    border: none;
+    color: #5b6178;
+    font-weight: 500;
+    border-left: 3px solid transparent;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.company-sidebar .list-group-item i {
+    color: #9298b3;
+    transition: color .15s ease;
+}
+
+.company-sidebar .list-group-item-action:hover {
+    background-color: #f7f7fd;
+    color: var(--brand-navy);
+}
+
+.company-sidebar .list-group-item-action:hover i {
+    color: var(--brand-indigo);
+}
+
+.company-sidebar .list-group-item.active-group {
+    background-color: #f7f7fd;
+}
+
+.company-sidebar .list-group-item.active {
+    background-color: var(--sidebar-active-bg);
+    border-left-color: var(--brand-indigo);
+    color: var(--brand-indigo-dark);
+    font-weight: 600;
+}
+
+.company-sidebar .list-group-item.active i {
+    color: var(--brand-indigo);
+}
+
+.company-sidebar .offcanvas-header {
+    border-bottom: 1px solid #eef0f7;
+}
+
+/* Mobile (below 992px, Bootstrap's lg breakpoint): #companySidebar.show
+   (ID + class) outranks any class-only Bootstrap rule on specificity
+   alone, guaranteeing the slide-in transition actually reaches its open
+   position regardless of which of Bootstrap's own offcanvas rules the
+   browser resolves in favour of. */
+#companySidebar.show {
+    transform: none !important;
+}
+
+/* Desktop (992px+): reset the offcanvas back to a normal, always-visible,
+   in-flow sidebar. Bootstrap ships this exact reset for `.offcanvas-lg`,
+   but only when the panel is a descendant of `.navbar-expand-lg` — this
+   sidebar is a standalone panel, not inside the navbar, so the reset is
+   written out explicitly here instead. */
+@media (min-width: 992px) {
+    #companySidebar {
+        position: static !important;
+        top: auto !important;
+        left: auto !important;
+        z-index: auto !important;
+        width: 240px !important;
+        height: auto !important;
+        visibility: visible !important;
+        transform: none !important;
+        transition: none !important;
+        border-width: 0 1px 0 0 !important;
+    }
+
+    #companySidebar .offcanvas-header {
+        display: none !important;
+    }
+
+    #companySidebar .offcanvas-body {
+        display: block;
+        padding: 0;
+        overflow-y: visible;
+    }
+}
+
+/* ---------- Cards ---------- */
+
+.card {
+    border: none;
+    border-radius: var(--card-radius);
+    /* !important: many company views still carry Bootstrap's own
+       .shadow-sm utility class alongside .card, and that utility's
+       box-shadow is !important by default (all Bootstrap 5.3 utilities
+       are) — without matching it here, .shadow-sm always wins regardless
+       of selector order. */
+    box-shadow: var(--card-shadow) !important;
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #eef0f7;
+    font-weight: 600;
+    color: var(--brand-navy);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+/* ---------- Forms ---------- */
+
+.form-control,
+.form-select {
+    border-radius: .5rem;
+    border-color: #dde0f0;
+    padding-top: .55rem;
+    padding-bottom: .55rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--brand-indigo);
+    box-shadow: 0 0 0 .2rem rgba(var(--brand-indigo-rgb), .15);
+}
+
+.form-label {
+    color: var(--brand-navy);
+    font-weight: 500;
+}
+
+/* ---------- Tables ---------- */
+
+.table thead th {
+    background-color: var(--table-head-bg);
+    color: var(--brand-navy);
+    font-weight: 600;
+    border-bottom: none;
+    white-space: nowrap;
+}
+
+.table td, .table th {
+    vertical-align: middle;
+}
+
+/* ---------- Buttons ---------- */
+
+.btn {
+    border-radius: .5rem;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: var(--brand-indigo);
+    border-color: var(--brand-indigo);
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: var(--brand-indigo-dark);
+    border-color: var(--brand-indigo-dark);
+}
+
+.btn-outline-primary {
+    color: var(--brand-indigo);
+    border-color: var(--brand-indigo);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--brand-indigo);
+    border-color: var(--brand-indigo);
+}
+
+.text-primary {
+    color: var(--brand-indigo) !important;
+}
+
+/* Soft pastel action buttons — deliberately separate from .btn-success/
+   .btn-danger, which keep their normal solid meaning everywhere else in
+   this app (e.g. a real delete confirmation). Only used where a friendly,
+   non-alarming secondary action calls for it (Preview Invoice, Save as
+   Draft). */
+.btn-soft-mint {
+    background-color: var(--soft-mint-bg);
+    border-color: var(--soft-mint-bg);
+    color: var(--soft-mint-text);
+}
+
+.btn-soft-mint:hover,
+.btn-soft-mint:focus {
+    background-color: var(--soft-mint-bg-hover);
+    border-color: var(--soft-mint-bg-hover);
+    color: var(--soft-mint-text);
+}
+
+.btn-soft-rose {
+    background-color: var(--soft-rose-bg);
+    border-color: var(--soft-rose-bg);
+    color: var(--soft-rose-text);
+}
+
+.btn-soft-rose:hover,
+.btn-soft-rose:focus {
+    background-color: var(--soft-rose-bg-hover);
+    border-color: var(--soft-rose-bg-hover);
+    color: var(--soft-rose-text);
+}
+
+.btn-accent-coral {
+    background-color: var(--accent-coral);
+    border-color: var(--accent-coral);
+    color: #fff;
+}
+
+.btn-accent-coral:hover,
+.btn-accent-coral:focus {
+    background-color: var(--accent-coral-dark);
+    border-color: var(--accent-coral-dark);
+    color: #fff;
+}
+
+/* ---------- Modals ---------- */
+
+.modal-content {
+    border: none;
+    border-radius: var(--card-radius);
+    box-shadow: 0 10px 30px rgba(30, 39, 97, .15);
+}
+
+.modal-header {
+    border-bottom: 1px solid #eef0f7;
+}
+
+.modal-footer {
+    border-top: 1px solid #eef0f7;
+}
+
+/* ---------- Badges & alerts ---------- */
+
+.badge {
+    border-radius: 50rem;
+    font-weight: 500;
+    padding: .4em .75em;
+}
+
+.alert {
+    border: none;
+    border-radius: var(--card-radius);
+}
+
+/* ---------- Pagination ---------- */
+
+.page-link {
+    color: var(--brand-indigo);
+}
+
+.page-item.active .page-link {
+    background-color: var(--brand-indigo);
+    border-color: var(--brand-indigo);
+}
+
+/* ---------- Back-to-top ---------- */
+
+.back-to-top-btn {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-color: var(--brand-indigo);
+    color: #fff;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(var(--brand-indigo-rgb), .35);
+    border: none;
+    z-index: 1030;
+}
+
+.back-to-top-btn:hover {
+    background-color: var(--brand-indigo-dark);
+    color: #fff;
+}
+
+.back-to-top-btn.show {
+    display: flex;
+}
+
+/* ---------- Footer ---------- */
+
+.company-footer {
+    background-color: #fff;
+    border-top: 1px solid #eef0f7;
+}
