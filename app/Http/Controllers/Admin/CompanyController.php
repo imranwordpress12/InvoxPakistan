@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreCompanyRequest;
 use App\Http\Requests\Admin\UpdateCompanyRequest;
 use App\Models\Company;
+use App\Models\Province;
 use App\Models\Transaction;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,7 +38,11 @@ class CompanyController extends Controller
         }
 
         if ($status = $request->string('subscription_status')->value()) {
-            $query->whereHas('latestSubscription', fn ($q) => $q->where('status', $status));
+            if ($status === 'currently_active') {
+                $query->whereHas('latestSubscription', fn ($q) => $q->currentlyActive());
+            } else {
+                $query->whereHas('latestSubscription', fn ($q) => $q->where('status', $status));
+            }
         }
 
         $companies = $query->latest()->paginate(20)->withQueryString();
@@ -93,7 +98,9 @@ class CompanyController extends Controller
     {
         $this->authorize('create', Company::class);
 
-        return view('admin.companies.create');
+        return view('admin.companies.create', [
+            'provinces' => Province::orderBy('name')->pluck('name'),
+        ]);
     }
 
     /**
@@ -120,9 +127,10 @@ class CompanyController extends Controller
         $company->load([
             'latestSubscription',
             'subscriptions' => fn ($q) => $q->latest(),
-            'transactions' => fn ($q) => $q->latest()->limit(10),
+            'transactions' => fn ($q) => $q->latest()->limit(6),
             'users',
         ]);
+        $company->setRelation('transactions', $company->transactions->sortBy('due_at')->values());
 
         return view('admin.companies.show', ['company' => $company]);
     }
@@ -133,7 +141,10 @@ class CompanyController extends Controller
 
         $company->load(['users']);
 
-        return view('admin.companies.edit', ['company' => $company]);
+        return view('admin.companies.edit', [
+            'company' => $company,
+            'provinces' => Province::orderBy('name')->pluck('name'),
+        ]);
     }
 
     /**
@@ -250,7 +261,7 @@ class CompanyController extends Controller
     {
         $this->authorize('view', $company);
 
-        $transactions = $company->transactions()->latest()->paginate(20);
+        $transactions = $company->transactions()->orderBy('due_at')->orderBy('id')->paginate(20);
 
         return view('admin.companies.transactions', [
             'company' => $company,

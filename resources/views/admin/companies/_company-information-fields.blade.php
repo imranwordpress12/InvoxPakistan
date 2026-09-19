@@ -33,12 +33,18 @@
 </div>
 <div class="col-md-4">
     <label class="form-label">Province</label>
-    <input type="text" name="province" value="{{ old('province', $c?->province) }}" class="form-control @error('province') is-invalid @enderror">
+    <select name="province" class="form-select @error('province') is-invalid @enderror">
+        <option value="" disabled @selected(! old('province', $c?->province))>Select...</option>
+        @foreach ($provinces as $province)
+            <option value="{{ $province }}" @selected(old('province', $c?->province) === $province)>{{ $province }}</option>
+        @endforeach
+    </select>
     @error('province') <div class="invalid-feedback">{{ $message }}</div> @enderror
 </div>
 <div class="col-md-4">
     <label class="form-label">Country</label>
-    <input type="text" name="country" value="{{ old('country', $c?->country ?? 'Pakistan') }}" class="form-control @error('country') is-invalid @enderror">
+    <input type="hidden" name="country" value="Pakistan">
+    <input type="text" value="Pakistan" class="form-control @error('country') is-invalid @enderror" disabled>
     @error('country') <div class="invalid-feedback">{{ $message }}</div> @enderror
 </div>
 <div class="col-md-6">

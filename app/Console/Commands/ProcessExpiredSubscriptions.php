@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Domain\Audit\AuditLogger;
-use App\Domain\Subscriptions\SubscriptionPeriod;
 use App\Domain\Transactions\InvoiceNumberGenerator;
+use App\Domain\Transactions\TransactionBillingPeriod;
 use App\Models\Subscription;
 use App\Models\Transaction;
 use Illuminate\Console\Command;
@@ -79,8 +79,8 @@ class ProcessExpiredSubscriptions extends Command
                     'subscription_type' => $subscription->type,
                     'amount' => $subscription->amount,
                     'status' => Transaction::STATUS_PENDING,
-                    'billing_period_start' => $billingStart,
-                    'billing_period_end' => SubscriptionPeriod::endDateFor($subscription->type, $billingStart),
+                    'billing_period_start' => TransactionBillingPeriod::startDateFor($subscription->type, $billingStart),
+                    'billing_period_end' => TransactionBillingPeriod::endDateFor($subscription->type, $billingStart),
                     // Due the moment the subscription actually lapsed, not
                     // whenever this command happened to run.
                     'due_at' => $subscription->ends_at,

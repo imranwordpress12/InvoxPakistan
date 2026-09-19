@@ -23,6 +23,8 @@ class DashboardController extends Controller
         // ends_at), not just what the stored status column happens to say.
         $paidCompanies = Company::whereHas('latestSubscription', fn ($q) => $q->currentlyActive())->count();
         $pendingCompanies = $totalCompanies - $paidCompanies;
+        $paidTransactions = Transaction::where('status', Transaction::STATUS_PAID)->count();
+        $pendingTransactions = Transaction::where('status', Transaction::STATUS_UNPAID)->count();
 
         $companiesOverview = Company::with('latestSubscription')
             ->latest()
@@ -39,6 +41,8 @@ class DashboardController extends Controller
             'totalCompanies' => $totalCompanies,
             'paidCompanies' => $paidCompanies,
             'pendingCompanies' => $pendingCompanies,
+            'paidTransactions' => $paidTransactions,
+            'pendingTransactions' => $pendingTransactions,
             'companiesOverview' => $companiesOverview,
             'recentPayments' => $recentPayments,
         ]);

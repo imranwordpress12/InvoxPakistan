@@ -18,6 +18,7 @@
         :action="route('admin.transactions.mark-paid', $transaction)"
         confirm-label="Confirm Payment"
         confirm-class="btn-success"
+        enctype="multipart/form-data"
     >
         <dl class="row mb-3">
             <dt class="col-4">Company</dt>
@@ -30,5 +31,14 @@
         <p>Are you sure you want to mark this transaction as paid?</p>
         <label class="form-label small mb-1">Notes (optional)</label>
         <textarea name="notes" class="form-control" rows="2" placeholder="e.g. Paid via bank transfer"></textarea>
+        <label for="payment-screenshot-{{ $transaction->id }}" class="form-label small mb-1 mt-3">Online payment screenshot (optional)</label>
+        <input
+            id="payment-screenshot-{{ $transaction->id }}"
+            type="file"
+            name="payment_screenshot"
+            class="form-control"
+            accept="image/jpeg,image/png,image/webp"
+        >
+        <div class="form-text">JPG, PNG, or WebP up to 5 MB.</div>
     </x-confirm-modal>
 @endif

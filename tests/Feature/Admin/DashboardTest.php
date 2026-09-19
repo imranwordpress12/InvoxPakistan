@@ -72,6 +72,41 @@ class DashboardTest extends TestCase
         $response->assertViewHas('pendingCompanies', 3);
     }
 
+    public function test_transaction_summary_cards_count_records_by_status(): void
+    {
+        $company = Company::factory()->create();
+        $subscription = Subscription::factory()->for($company)->create();
+
+        Transaction::factory()->create([
+            'company_id' => $company->id,
+            'subscription_id' => $subscription->id,
+            'status' => Transaction::STATUS_PAID,
+        ]);
+        Transaction::factory()->pending()->create([
+            'company_id' => $company->id,
+            'subscription_id' => $subscription->id,
+        ]);
+        Transaction::factory()->cancelled()->create([
+            'company_id' => $company->id,
+            'subscription_id' => $subscription->id,
+        ]);
+
+        $response = $this->actingAs($this->admin())->get(route('admin.dashboard'));
+
+        $response->assertViewHas('paidTransactions', 1);
+        $response->assertViewHas('pendingTransactions', 1);
+    }
+
+    public function test_summary_cards_link_to_existing_admin_destinations(): void
+    {
+        $response = $this->actingAs($this->admin())->get(route('admin.dashboard'));
+
+        $response->assertSee(route('admin.companies.index'), false);
+        $response->assertSee(route('admin.companies.index', ['subscription_status' => 'currently_active']), false);
+        $response->assertSee(route('admin.companies.pending'), false);
+        $response->assertSee(route('admin.dashboard').'#recent-payments', false);
+    }
+
     public function test_companies_overview_lists_companies_with_their_current_subscription(): void
     {
         $company = Company::factory()->create(['name' => 'Overview Co']);

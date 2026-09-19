@@ -48,7 +48,7 @@
                 </div>
             </div>
         </div>
-
+        
         <div class="col-md-6">
             <div class="card shadow-sm h-100">
                 <div class="card-header">Current Subscription</div>
@@ -105,21 +105,23 @@
                 <div class="table-responsive">
                     <table class="table table-sm mb-0">
                         <thead>
-                            <tr><th>Invoice</th><th>Type</th><th>Amount</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+                            <tr><th>Invoice</th><th>Type</th><th>Plan</th><th>Amount</th><th>Status</th><th>Transaction Date</th><th>Due Date</th><th>Actions</th></tr>
                         </thead>
                         <tbody>
                             @forelse ($company->transactions as $transaction)
                                 <tr>
-                                    <td>{{ $transaction->invoice_number }}</td>
+                                    <td><a href="{{ route('admin.transactions.show', $transaction) }}">{{ $transaction->invoice_number }}</a></td>
                                     <td>{{ ucfirst($transaction->transaction_type) }}</td>
+                                    <td>{{ ucfirst($transaction->subscription_type) }}</td>
                                     <td>PKR {{ number_format($transaction->amount, 2) }}</td>
                                     <td><x-status-badge :status="$transaction->status" /></td>
                                     <td>{{ ($transaction->paid_at ?? $transaction->created_at)->format('d-M-Y') }}</td>
+                                    <td>{{ $transaction->due_at?->format('d-M-Y') ?? '—' }}</td>
                                     <td>@include('admin.companies._mark-paid-button')</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted py-3">No transactions yet.</td>
+                                    <td colspan="8" class="text-center text-muted py-3">No transactions yet.</td>
                                 </tr>
                             @endforelse
                         </tbody>

@@ -28,6 +28,7 @@ class MarkTransactionAsPaidTest extends TestCase
         $transaction = Transaction::factory()->pending()->create([
             'company_id' => $company->id,
             'subscription_id' => $subscription->id,
+            'due_at' => Carbon::parse('2026-07-15'),
         ]);
 
         $updated = (new MarkTransactionAsPaid)->handle($transaction);
@@ -39,6 +40,10 @@ class MarkTransactionAsPaidTest extends TestCase
         $this->assertSame(Subscription::STATUS_ACTIVE, $subscription->status);
         $this->assertSame($updated->paid_at->toDateString(), $subscription->starts_at->toDateString());
         $this->assertTrue($subscription->isActive());
+
+        $nextTransaction = $subscription->transactions()->where('id', '!=', $updated->id)->first();
+        $this->assertNotNull($nextTransaction);
+        $this->assertSame('2026-08-14', $nextTransaction->due_at->toDateString());
     }
 
     public function test_it_saves_the_given_notes(): void

@@ -5,6 +5,7 @@ namespace App\Domain\Companies;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Subscriptions\SubscriptionPeriod;
 use App\Domain\Transactions\InvoiceNumberGenerator;
+use App\Domain\Transactions\TransactionBillingPeriod;
 use App\Models\Company;
 use App\Models\Subscription;
 use App\Models\Transaction;
@@ -62,10 +63,9 @@ class CompanyOnboardingService
                 'amount' => $data['amount'],
             ]);
 
+            $firstDueAt = $subscription->starts_at->copy();
+            $nextDueAt = SubscriptionPeriod::endDateFor($subscription->type, $firstDueAt);
             $registeredAt = now();
-            $nextDueAt = $data['subscription_type'] === Subscription::TYPE_MONTHLY
-                ? $registeredAt->copy()->addMonth()
-                : $registeredAt->copy()->addYear();
 
             $company->transactions()->create([
                 'subscription_id' => $subscription->id,
@@ -74,16 +74,12 @@ class CompanyOnboardingService
                 'subscription_type' => $data['subscription_type'],
                 'amount' => $data['amount'],
                 'status' => Transaction::STATUS_PAID,
-                'billing_period_start' => $subscription->starts_at,
-                'billing_period_end' => $subscription->ends_at,
-                'due_at' => $registeredAt,
+                'billing_period_start' => TransactionBillingPeriod::startDateFor($subscription->type, $subscription->starts_at),
+                'billing_period_end' => TransactionBillingPeriod::endDateFor($subscription->type, $subscription->starts_at),
+                'due_at' => $firstDueAt,
                 'paid_at' => $registeredAt,
                 'notes' => null,
             ]);
-
-            $nextPeriodEnd = $data['subscription_type'] === Subscription::TYPE_MONTHLY
-                ? $nextDueAt->copy()->addMonth()
-                : $nextDueAt->copy()->addYear();
 
             $company->transactions()->create([
                 'subscription_id' => $subscription->id,
@@ -92,8 +88,8 @@ class CompanyOnboardingService
                 'subscription_type' => $data['subscription_type'],
                 'amount' => $data['amount'],
                 'status' => Transaction::STATUS_PENDING,
-                'billing_period_start' => $nextDueAt,
-                'billing_period_end' => $nextPeriodEnd,
+                'billing_period_start' => TransactionBillingPeriod::startDateFor($subscription->type, $nextDueAt),
+                'billing_period_end' => TransactionBillingPeriod::endDateFor($subscription->type, $nextDueAt),
                 'due_at' => $nextDueAt,
                 'paid_at' => null,
                 'notes' => null,

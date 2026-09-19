@@ -1,6 +1,7 @@
 <?php
 
 use App\Console\Commands\ProcessExpiredSubscriptions;
+use App\Console\Commands\SendPaymentReminders;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -18,4 +19,8 @@ Artisan::command('inspire', function () {
 // command is also self-protecting even without it — see its docblock.
 Schedule::command(ProcessExpiredSubscriptions::class)
     ->hourly()
+    ->withoutOverlapping();
+
+Schedule::command(SendPaymentReminders::class)
+    ->dailyAt('00:05')
     ->withoutOverlapping();

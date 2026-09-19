@@ -32,6 +32,7 @@
     // Precompute into plain variables here instead.
     $itemsMasterData = $items->map(fn ($i) => [
         'id' => $i->id,
+        'item_name' => $i->item_name,
         'sale_type' => $i->sale_type,
         'hs_code' => $i->hs_code,
         'description' => $i->description ?: $i->item_name,
@@ -83,7 +84,17 @@
         <div class="card-body row g-3">
             <div class="col-md-4">
                 <label class="form-label">Customer (from master)</label>
-                <select id="customer-select" class="form-select">
+                <div class="position-relative">
+                    <input
+                        type="search"
+                        id="customer-search"
+                        class="form-control"
+                        placeholder="Type to search or select a customer..."
+                        autocomplete="off"
+                    >
+                    <div id="customer-suggestions" class="list-group position-absolute w-100 shadow-sm" style="z-index: 1000; max-height: 260px; overflow-y: auto; display: none;"></div>
+                </div>
+                <select id="customer-select" class="form-select d-none">
                     <option value="">Select Customer (optional)</option>
                     @foreach ($customers as $customer)
                         <option value="{{ $customer->id }}" @selected((string) old('customer_id', $invoice?->customer_id) === (string) $customer->id)>
@@ -238,7 +249,17 @@
             <div class="row g-3">
                 <div class="col-md-3">
                     <label class="form-label">Item (from master)</label>
-                    <select id="item-select" class="form-select">
+                    <div class="position-relative">
+                        <input
+                            type="search"
+                            id="item-search"
+                            class="form-control"
+                            placeholder="Type to search or select an item..."
+                            autocomplete="off"
+                        >
+                        <div id="item-suggestions" class="list-group position-absolute w-100 shadow-sm" style="z-index: 1000; max-height: 260px; overflow-y: auto; display: none;"></div>
+                    </div>
+                    <select id="item-select" class="form-select d-none">
                         <option value="">Select Item (from master)</option>
                         @foreach ($items as $masterItem)
                             <option value="{{ $masterItem->id }}">{{ $masterItem->item_name }}</option>
@@ -395,6 +416,7 @@
                 <table class="table table-sm align-middle" id="items-table">
                     <thead>
                         <tr>
+                            <th>Item</th>
                             <th>Sale Type</th>
                             <th>HS Code</th>
                             <th>Product Desc.</th>
@@ -404,7 +426,15 @@
                             <th>Price/Unit</th>
                             <th>Value of Sales Excl. ST</th>
                             <th>Sales Tax</th>
+                            <th>Fixed/Retail Price</th>
+                            <th>ST withheld at Source</th>
+                            <th>Extra Tax</th>
+                            <th>Further Tax</th>
+                            <th>Fed Payable</th>
+                            <th>Discount</th>
                             <th>Total Sales Value</th>
+                            <th>SRO / Schedule No</th>
+                            <th>Item Sr. No</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -432,6 +462,31 @@
         <a href="{{ route('company.invoices.drafts') }}" class="btn btn-outline-secondary">Cancel</a>
     </div>
 </form>
+
+@if (! $invoice)
+    <div class="modal fade" id="invoice-important-notice" tabindex="-1" aria-labelledby="invoice-important-notice-title" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-body text-center px-4 py-4">
+                    <div class="mb-3 text-info" style="font-size: 3.5rem; line-height: 1;">
+                        <i class="bi bi-info-circle"></i>
+                    </div>
+                    <h5 class="fw-semibold mb-4" id="invoice-important-notice-title">Important Notice</h5>
+                    <div class="text-start small text-muted">
+                        <p class="fw-semibold text-dark mb-2">Please review your invoice details carefully before proceeding.</p>
+                        <ol class="mb-0 ps-3">
+                            <li>Invoices cannot be edited or cancelled once submitted.</li>
+                            <li>Verify all selections, values, and calculations thoroughly.</li>
+                            <li>Ensure the data accurately reflects your business context.</li>
+                            <li>If you detect any discrepancy, do not submit the invoice. Contact our support team for assistance.</li>
+                        </ol>
+                    </div>
+                    <button type="button" class="btn btn-primary mt-4 px-4" data-bs-dismiss="modal">I Understand</button>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
 
 <div class="modal fade" id="preview-modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -1084,6 +1139,7 @@
     $('item-select').addEventListener('change', function () {
         const item = itemsMaster.find((i) => String(i.id) === this.value);
         if (!item) return;
+        $('item-search').value = item.item_name || '';
         $('entry-sale_type').value = item.sale_type || '';
         $('entry-product_description').value = item.description || '';
         $('entry-price_per_unit').value = item.price_per_unit || '';
@@ -1116,6 +1172,7 @@
     $('customer-select').addEventListener('change', function () {
         $('customer_id').value = this.value || '';
         const customer = customersMaster.find((c) => String(c.id) === this.value);
+        $('customer-search').value = customer ? customer.business_name : '';
         if (!customer) return;
         $('buyer_ntn_cnic').value = customer.ntn_cnic || '';
         $('buyer_business_name').value = customer.business_name || '';
@@ -1125,6 +1182,56 @@
         $('buyer_strn').value = customer.strn || '';
         syncBuyerRegistrationTypeUi();
     });
+
+    function renderMasterSuggestions(inputId, suggestionsId, rows, labelKey, selectId, limit = 50) {
+        const input = $(inputId);
+        const box = $(suggestionsId);
+        const query = input.value.trim().toLowerCase();
+        const matches = rows
+            .filter((row) => (row[labelKey] || '').toLowerCase().includes(query))
+            .slice(0, limit);
+
+        box.innerHTML = matches.length
+            ? matches.map((row, index) => `<button type="button" class="list-group-item list-group-item-action" data-master-index="${index}">${escapeHtml(row[labelKey])}</button>`).join('')
+            : '<div class="list-group-item text-muted small">No matching records.</div>';
+        box.style.display = '';
+
+        matches.forEach((row, index) => {
+            box.querySelector(`[data-master-index="${index}"]`).addEventListener('click', () => {
+                input.value = row[labelKey];
+                $(selectId).value = row.id;
+                $(selectId).dispatchEvent(new Event('change'));
+                box.style.display = 'none';
+            });
+        });
+    }
+
+    $('customer-search').addEventListener('input', () => {
+        $('customer-select').value = '';
+        $('customer_id').value = '';
+        renderMasterSuggestions('customer-search', 'customer-suggestions', customersMaster, 'business_name', 'customer-select');
+    });
+    $('customer-search').addEventListener('focus', () => {
+        renderMasterSuggestions('customer-search', 'customer-suggestions', customersMaster, 'business_name', 'customer-select');
+    });
+    $('item-search').addEventListener('input', () => {
+        $('item-select').value = '';
+        renderMasterSuggestions('item-search', 'item-suggestions', itemsMaster, 'item_name', 'item-select');
+    });
+    $('item-search').addEventListener('focus', () => {
+        renderMasterSuggestions('item-search', 'item-suggestions', itemsMaster, 'item_name', 'item-select');
+    });
+    document.addEventListener('click', (event) => {
+        if (!$('customer-suggestions').contains(event.target) && event.target !== $('customer-search')) {
+            $('customer-suggestions').style.display = 'none';
+        }
+        if (!$('item-suggestions').contains(event.target) && event.target !== $('item-search')) {
+            $('item-suggestions').style.display = 'none';
+        }
+    });
+
+    const selectedCustomer = customersMaster.find((customer) => String(customer.id) === $('customer-select').value);
+    if (selectedCustomer) $('customer-search').value = selectedCustomer.business_name;
 
     // ---- Buyer Registration Type change behavior (Section 17) ----
 
@@ -1227,6 +1334,7 @@
         loadUom('');
         loadRate('');
         $('item-select').value = '';
+        $('item-search').value = '';
         $('entry-sales_tax').value = '0.00';
         $('entry-total_sales_value').value = '0.00';
         $('entry-manual-further-tax').checked = false;
@@ -1308,6 +1416,10 @@
     loadInvoiceTypes();
     loadSaleTypesList();
     loadHsCodesList();
+
+    @if (! $invoice)
+        new bootstrap.Modal($('invoice-important-notice')).show();
+    @endif
 })();
 </script>
 @endpush

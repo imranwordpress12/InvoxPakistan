@@ -2,11 +2,13 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Mail\PaymentThankYou;
 use App\Models\Company;
 use App\Models\Subscription;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class TransactionControllerTest extends TestCase
@@ -32,6 +34,7 @@ class TransactionControllerTest extends TestCase
     public function test_admin_can_mark_a_pending_transaction_as_paid(): void
     {
         $transaction = $this->pendingTransaction();
+        Mail::fake();
 
         $response = $this->actingAs($this->admin())
             ->from(route('admin.companies.show', $transaction->company))
@@ -42,6 +45,9 @@ class TransactionControllerTest extends TestCase
 
         $this->assertSame(Transaction::STATUS_PAID, $transaction->refresh()->status);
         $this->assertSame(Subscription::STATUS_ACTIVE, $transaction->subscription->refresh()->status);
+        Mail::assertSent(PaymentThankYou::class, function (PaymentThankYou $mail) use ($transaction): bool {
+            return $mail->hasTo($transaction->company->email);
+        });
     }
 
     public function test_admin_can_attach_a_note_when_marking_paid(): void

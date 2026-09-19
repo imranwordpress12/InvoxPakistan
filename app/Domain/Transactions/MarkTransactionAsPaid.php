@@ -19,9 +19,9 @@ use Illuminate\Support\Facades\DB;
  */
 class MarkTransactionAsPaid
 {
-    public function handle(Transaction $transaction, ?string $notes = null): Transaction
+    public function handle(Transaction $transaction, ?string $notes = null, ?string $paymentScreenshot = null): Transaction
     {
-        return DB::transaction(function () use ($transaction, $notes) {
+        return DB::transaction(function () use ($transaction, $notes, $paymentScreenshot) {
             // Re-fetch under a row lock rather than trusting the caller's
             // (possibly stale) $transaction instance — guards against two
             // concurrent requests both marking the same transaction paid.
@@ -48,16 +48,15 @@ class MarkTransactionAsPaid
                 'status' => Transaction::STATUS_PAID,
                 'paid_at' => now(),
                 'notes' => filled($notes) ? $notes : $locked->notes,
+                'payment_screenshot' => $paymentScreenshot ?: $locked->payment_screenshot,
             ])->save();
 
             (new SubscriptionRenewal)->renew($subscription, $locked->paid_at);
 
-            $nextDueAt = $locked->due_at?->copy() ?? $locked->paid_at->copy();
-            $nextDueAt = $subscription->type === Subscription::TYPE_MONTHLY
-                ? $nextDueAt->addMonth()
-                : $nextDueAt->addYear();
-            $nextPeriodEnd = SubscriptionPeriod::endDateFor($subscription->type, $nextDueAt);
-
+            $nextDueAt = SubscriptionPeriod::endDateFor(
+                $subscription->type,
+                $locked->due_at?->copy() ?? $locked->paid_at->copy(),
+            );
             $alreadyCreated = $subscription->transactions()
                 ->where('status', Transaction::STATUS_PENDING)
                 ->where('due_at', $nextDueAt)
@@ -71,8 +70,8 @@ class MarkTransactionAsPaid
                     'subscription_type' => $subscription->type,
                     'amount' => $subscription->amount,
                     'status' => Transaction::STATUS_PENDING,
-                    'billing_period_start' => $nextDueAt,
-                    'billing_period_end' => $nextPeriodEnd,
+                    'billing_period_start' => TransactionBillingPeriod::startDateFor($subscription->type, $nextDueAt),
+                    'billing_period_end' => TransactionBillingPeriod::endDateFor($subscription->type, $nextDueAt),
                     'due_at' => $nextDueAt,
                     'paid_at' => null,
                     'notes' => null,

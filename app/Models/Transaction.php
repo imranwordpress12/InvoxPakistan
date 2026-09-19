@@ -23,8 +23,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'billing_period_start',
     'billing_period_end',
     'due_at',
+    'reminder_sent_at',
     'paid_at',
     'notes',
+    'payment_screenshot',
 ])]
 // `pending_dedupe_key` is a database-generated column (see the
 // create_transactions_table migration): it exists only to back a unique
@@ -56,6 +58,7 @@ class Transaction extends Model
             'billing_period_start' => 'date',
             'billing_period_end' => 'date',
             'due_at' => 'datetime',
+            'reminder_sent_at' => 'datetime',
             'paid_at' => 'datetime',
         ];
     }

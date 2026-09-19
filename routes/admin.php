@@ -31,6 +31,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('companies/{company}', [CompanyController::class, 'destroy'])->name('companies.destroy');
         Route::get('companies/{company}/transactions', [CompanyController::class, 'transactions'])->name('companies.transactions');
 
+        Route::get('transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
+        Route::get('transactions/{transaction}/screenshot', [TransactionController::class, 'screenshot'])->name('transactions.screenshot');
         Route::post('transactions/{transaction}/mark-paid', [TransactionController::class, 'markPaid'])->name('transactions.mark-paid');
 
         Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');

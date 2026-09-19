@@ -20,6 +20,7 @@ class MarkTransactionPaidRequest extends FormRequest
     {
         return [
             'notes' => ['nullable', 'string', 'max:1000'],
+            'payment_screenshot' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ];
     }
 

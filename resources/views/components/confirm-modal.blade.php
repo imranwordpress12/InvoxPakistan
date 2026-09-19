@@ -12,12 +12,13 @@
     'method' => 'POST',
     'confirmLabel' => 'Confirm',
     'confirmClass' => 'btn-primary',
+    'enctype' => null,
 ])
 
 <div class="modal fade" id="{{ $id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="{{ $action }}">
+            <form method="POST" action="{{ $action }}" @if ($enctype) enctype="{{ $enctype }}" @endif>
                 @csrf
                 @if (strtoupper($method) !== 'POST')
                     @method($method)

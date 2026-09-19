@@ -7,28 +7,57 @@
 
     <div class="row g-3 mb-4">
         <div class="col-md-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <div class="text-muted small">Total Companies</div>
-                    <div class="h3 mb-0">{{ $totalCompanies }}</div>
+            <a href="{{ route('admin.companies.index') }}" class="text-decoration-none text-reset">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Total Companies</div>
+                        <div class="h3 mb-0">{{ $totalCompanies }}</div>
+                    </div>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-md-4">
-            <div class="card shadow-sm h-100 border-success">
-                <div class="card-body">
-                    <div class="text-muted small">Paid Companies</div>
-                    <div class="h3 mb-0 text-success">{{ $paidCompanies }}</div>
+            <a href="{{ route('admin.companies.index', ['subscription_status' => 'currently_active']) }}" class="text-decoration-none text-reset">
+                <div class="card shadow-sm h-100 border-success">
+                    <div class="card-body">
+                        <div class="text-muted small">Paid Companies</div>
+                        <div class="h3 mb-0 text-success">{{ $paidCompanies }}</div>
+                    </div>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-md-4">
-            <div class="card shadow-sm h-100 border-warning">
-                <div class="card-body">
-                    <div class="text-muted small">Pending Companies</div>
-                    <div class="h3 mb-0 text-warning">{{ $pendingCompanies }}</div>
+            <a href="{{ route('admin.companies.pending') }}" class="text-decoration-none text-reset">
+                <div class="card shadow-sm h-100 border-warning">
+                    <div class="card-body">
+                        <div class="text-muted small">Pending Companies</div>
+                        <div class="h3 mb-0 text-warning">{{ $pendingCompanies }}</div>
+                    </div>
                 </div>
-            </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <a href="{{ route('admin.dashboard') }}#recent-payments" class="text-decoration-none text-reset">
+                <div class="card shadow-sm h-100 border-success">
+                    <div class="card-body">
+                        <div class="text-muted small">Paid Transactions</div>
+                        <div class="h3 mb-0 text-success">{{ $paidTransactions }}</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-6">
+            <a href="{{ route('admin.companies.pending') }}" class="text-decoration-none text-reset">
+                <div class="card shadow-sm h-100 border-warning">
+                    <div class="card-body">
+                        <div class="text-muted small">Pending / Unpaid Transactions</div>
+                        <div class="h3 mb-0 text-warning">{{ $pendingTransactions }}</div>
+                    </div>
+                </div>
+            </a>
         </div>
     </div>
 
@@ -71,7 +100,7 @@
         </div>
     </div>
 
-    <div class="card shadow-sm">
+    <div class="card shadow-sm" id="recent-payments">
         <div class="card-header">Recent Payments</div>
         <div class="table-responsive">
             <table class="table table-hover mb-0">

@@ -12,8 +12,7 @@ use Carbon\CarbonInterface;
  *   period starts on the payment date itself — no backdating, no grace
  *   period, per the PRD's recommended behavior.
  * - If payment arrives before (or exactly on) the existing `ends_at`, the
- *   new period starts the day *after* the current `ends_at` — this never
- *   shortens unused subscription time (PRD #27's 20-Aug/10-Aug example).
+ *   new period starts on the current `ends_at` so renewal dates do not drift.
  *
  * Persists the update immediately (a single-row write is its own unit of
  * work) — Phase 6's "mark transaction paid" flow wraps this call together
@@ -26,7 +25,7 @@ class SubscriptionRenewal
         $paymentDate = $paymentDate?->copy() ?? now();
 
         $newStartsAt = $paymentDate->lte($subscription->ends_at)
-            ? $subscription->ends_at->copy()->addDay()
+            ? $subscription->ends_at->copy()
             : $paymentDate;
 
         $subscription->forceFill([

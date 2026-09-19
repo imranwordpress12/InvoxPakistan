@@ -62,7 +62,13 @@ class CompanyOnboardingServiceTest extends TestCase
         $this->assertSame(Transaction::TYPE_INITIAL, $transaction->transaction_type);
         $this->assertSame(Transaction::STATUS_PAID, $transaction->status);
         $this->assertNotNull($transaction->paid_at);
+        $this->assertSame('2026-08-09', $transaction->due_at->toDateString());
         $this->assertSame($subscription->id, $transaction->subscription_id);
+
+        $nextTransaction = $company->transactions()->where('transaction_type', Transaction::TYPE_RENEWAL)->first();
+        $this->assertNotNull($nextTransaction);
+        $this->assertSame(Transaction::STATUS_PENDING, $nextTransaction->status);
+        $this->assertSame('2026-09-08', $nextTransaction->due_at->toDateString());
     }
 
     public function test_yearly_subscription_ends_one_year_after_it_starts(): void
@@ -75,6 +81,10 @@ class CompanyOnboardingServiceTest extends TestCase
         $subscription = $company->subscriptions()->first();
 
         $this->assertSame('2027-08-09', $subscription->ends_at->toDateString());
+
+        $transactions = $company->transactions()->orderBy('id')->get();
+        $this->assertSame('2026-08-09', $transactions[0]->due_at->toDateString());
+        $this->assertSame('2027-08-09', $transactions[1]->due_at->toDateString());
     }
 
     public function test_it_creates_an_fbr_credential_when_provided(): void

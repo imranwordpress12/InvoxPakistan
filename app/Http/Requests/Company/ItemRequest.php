@@ -2,8 +2,12 @@
 
 namespace App\Http\Requests\Company;
 
+use App\Domain\Invoices\Fbr\FbrReferenceApiException;
+use App\Domain\Invoices\Fbr\FbrReferenceService;
 use App\Models\Item;
+use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 /**
@@ -50,5 +54,40 @@ class ItemRequest extends FormRequest
             'description' => ['nullable', 'string'],
             'status' => ['required', Rule::in([Item::STATUS_ACTIVE, Item::STATUS_INACTIVE])],
         ];
+    }
+
+    public function withValidator(ValidatorContract $validator): void
+    {
+        $validator->after(fn ($validator) => $this->validateHsCodeUomCombination($validator));
+    }
+
+    private function validateHsCodeUomCombination(ValidatorContract $validator): void
+    {
+        $hsCode = trim((string) $this->input('hs_code', ''));
+        $uom = trim((string) $this->input('uom', ''));
+
+        if ($hsCode === '' || $uom === '') {
+            return;
+        }
+
+        try {
+            $allowed = app(FbrReferenceService::class)->hsUom($this->user()->company_id, $hsCode);
+        } catch (FbrReferenceApiException) {
+            return;
+        }
+
+        if (! array_is_list($allowed)) {
+            return;
+        }
+
+        $allowedNames = collect($allowed)
+            ->pluck('description')
+            ->filter(fn ($description) => filled($description))
+            ->map(fn ($description) => Str::lower(trim((string) $description)))
+            ->all();
+
+        if ($allowedNames !== [] && ! in_array(Str::lower($uom), $allowedNames, true)) {
+            $validator->errors()->add('uom', 'The selected UoM is not valid for the selected HS Code.');
+        }
     }
 }
