@@ -24,23 +24,26 @@ class SendPaymentRemindersTest extends TestCase
         $company = Company::factory()->create();
         $firstCustomer = Customer::factory()->for($company)->create(['email' => 'first@example.test']);
         $secondCustomer = Customer::factory()->for($company)->create(['email' => 'second@example.test']);
-        $subscription = Subscription::factory()->for($company)->pending()->create();
-        $transaction = Transaction::factory()->pending()->create([
+        $subscription = Subscription::factory()->for($company)->create(['status' => Subscription::STATUS_ACTIVE]);
+        $transaction = Transaction::factory()->create([
             'company_id' => $company->id,
             'subscription_id' => $subscription->id,
+            'status' => Transaction::STATUS_DUE,
             'due_at' => Carbon::parse('2026-09-21 15:30:00'),
             'reminder_sent_at' => null,
         ]);
 
         $this->artisan('transactions:send-payment-reminders')->assertExitCode(0);
 
-        Mail::assertSent(PaymentReminder::class, 2);
+        Mail::assertSent(PaymentReminder::class, 3);
+        Mail::assertSent(PaymentReminder::class, fn (PaymentReminder $mail) => $mail->hasTo($company->email));
         Mail::assertSent(PaymentReminder::class, fn (PaymentReminder $mail) => $mail->hasTo($firstCustomer->email));
         Mail::assertSent(PaymentReminder::class, fn (PaymentReminder $mail) => $mail->hasTo($secondCustomer->email));
-        $this->assertNotNull($transaction->refresh()->reminder_sent_at);
+        $this->assertSame(Transaction::STATUS_PENDING, $transaction->refresh()->status);
+        $this->assertNotNull($transaction->reminder_sent_at);
 
         $this->artisan('transactions:send-payment-reminders')->assertExitCode(0);
-        Mail::assertSent(PaymentReminder::class, 2);
+        Mail::assertSent(PaymentReminder::class, 3);
     }
 
     public function test_it_does_not_remind_paid_or_not_yet_due_transactions(): void

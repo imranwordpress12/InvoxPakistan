@@ -35,10 +35,14 @@ class SandboxFbrInvoiceSubmitter implements FbrInvoiceSubmitter
 
     public function submit(Invoice $invoice): FbrSubmissionResult
     {
-        $token = Company::whereKey($invoice->company_id)->value('fbr_token_sandbox');
+        $company = Company::find($invoice->company_id);
+        $token = ($company?->fbr_status === Company::FBR_STATUS_ACTIVE)
+            ? $company?->fbr_token_production
+            : $company?->fbr_token_sandbox;
 
         if (blank($token)) {
-            return $this->failure('Configuration error: no FBR Sandbox token is set up for this company. '.
+            $type = ($company?->fbr_status === Company::FBR_STATUS_ACTIVE) ? 'Production' : 'Sandbox';
+            return $this->failure("Configuration error: no FBR {$type} token is set up for this company. ".
                 'Ask an administrator to add one under Company Settings before submitting invoices.');
         }
 

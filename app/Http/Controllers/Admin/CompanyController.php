@@ -167,7 +167,7 @@ class CompanyController extends Controller
             $loginUser = $company->users()->first();
             $originalLoginEmail = $loginUser?->email;
 
-            $company->update([
+            $updateData = [
                 'name' => $data['name'],
                 'business_name' => $data['business_name'] ?? null,
                 'email' => $data['email'],
@@ -178,10 +178,121 @@ class CompanyController extends Controller
                 'country' => $data['country'] ?? null,
                 'ntn_cnic' => $data['ntn_cnic'] ?? null,
                 'business_registration_number' => $data['business_registration_number'] ?? null,
-                'fbr_token_production' => $data['fbr_token_production'] ?? $company->fbr_token_production,
-                'fbr_token_sandbox' => $data['fbr_token_sandbox'] ?? $company->fbr_token_sandbox,
                 'status' => $data['status'],
-            ]);
+            ];
+
+            if (isset($data['fbr_status'])) {
+                $updateData['fbr_status'] = $data['fbr_status'];
+            }
+            if (filled($data['fbr_token_production'] ?? null)) {
+                $updateData['fbr_token_production'] = $data['fbr_token_production'];
+            }
+            if (filled($data['fbr_token_sandbox'] ?? null)) {
+                $updateData['fbr_token_sandbox'] = $data['fbr_token_sandbox'];
+            }
+
+            $company->update($updateData);
+
+            // Subscription Management (Chunk 1)
+            $latestSub = $company->latestSubscription;
+            $newSubStatus = $data['subscription_status'] ?? null;
+            $newSubStartsAt = isset($data['subscription_starts_at']) && filled($data['subscription_starts_at'])
+                ? \Illuminate\Support\Carbon::parse($data['subscription_starts_at'])->startOfDay()
+                : null;
+            $newSubType = $data['subscription_type'] ?? ($latestSub?->type ?? \App\Models\Subscription::TYPE_MONTHLY);
+            $newAmount = isset($data['amount']) ? (float) $data['amount'] : ($latestSub?->amount ?? 0.00);
+
+            if ($newSubStatus === \App\Models\Subscription::STATUS_ACTIVE) {
+                if (! $latestSub || $latestSub->status !== \App\Models\Subscription::STATUS_ACTIVE) {
+                    // New Activation or Inactive -> Active Reactivation
+                    $startsAt = $newSubStartsAt ?? now()->startOfDay();
+                    $endsAt = \App\Domain\Subscriptions\SubscriptionPeriod::endDateFor($newSubType, $startsAt);
+
+                    $subscription = $company->subscriptions()->create([
+                        'type' => $newSubType,
+                        'status' => \App\Models\Subscription::STATUS_ACTIVE,
+                        'starts_at' => $startsAt,
+                        'ends_at' => $endsAt,
+                        'amount' => $newAmount,
+                    ]);
+
+                    // Transaction #1: Initial Paid transaction (Rule 6 & 20)
+                    $company->transactions()->create([
+                        'subscription_id' => $subscription->id,
+                        'invoice_number' => \App\Domain\Transactions\InvoiceNumberGenerator::generate(),
+                        'transaction_type' => \App\Models\Transaction::TYPE_INITIAL,
+                        'subscription_type' => $newSubType,
+                        'amount' => $newAmount,
+                        'status' => \App\Models\Transaction::STATUS_PAID,
+                        'billing_period_start' => $startsAt,
+                        'billing_period_end' => $endsAt,
+                        'due_at' => $startsAt,
+                        'paid_at' => now(),
+                        'notes' => null,
+                    ]);
+
+                    // Transaction #2: Single future transaction (Rule 6 & 20)
+                    $tx2Start = $endsAt->copy()->addDay()->startOfDay();
+                    $tx2End = \App\Domain\Subscriptions\SubscriptionPeriod::endDateFor($newSubType, $tx2Start);
+                    $tx2Status = $tx2End->isPast() ? \App\Models\Transaction::STATUS_OVERDUE : \App\Models\Transaction::STATUS_DUE;
+
+                    $company->transactions()->create([
+                        'subscription_id' => $subscription->id,
+                        'invoice_number' => \App\Domain\Transactions\InvoiceNumberGenerator::generate(),
+                        'transaction_type' => \App\Models\Transaction::TYPE_RENEWAL,
+                        'subscription_type' => $newSubType,
+                        'amount' => $newAmount,
+                        'status' => $tx2Status,
+                        'billing_period_start' => $tx2Start,
+                        'billing_period_end' => $tx2End,
+                        'due_at' => $tx2End,
+                        'paid_at' => null,
+                        'notes' => null,
+                    ]);
+                } else {
+                    // Already Active Subscription: check for Subscription Type change
+                    if ($latestSub->type !== $newSubType) {
+                        $endsAt = \App\Domain\Subscriptions\SubscriptionPeriod::endDateFor($newSubType, $latestSub->starts_at);
+                        $latestSub->update([
+                            'type' => $newSubType,
+                            'amount' => $newAmount,
+                            'ends_at' => $endsAt,
+                        ]);
+
+                        // Recalculate dates for current/future unpaid transactions (Rule 21)
+                        // Pending -> Due, Overdue -> Due, Due -> Due. Keep billing_period_start unchanged.
+                        $unpaidTxs = \App\Models\Transaction::where('company_id', $company->id)
+                            ->whereIn('status', [\App\Models\Transaction::STATUS_DUE, \App\Models\Transaction::STATUS_PENDING, 'overdue'])
+                            ->get();
+
+                        foreach ($unpaidTxs as $tx) {
+                            $newEnd = \App\Domain\Transactions\TransactionBillingPeriod::endDateFor($newSubType, $tx->billing_period_start);
+                            $tx->update([
+                                'subscription_type' => $newSubType,
+                                'amount' => $newAmount,
+                                'billing_period_end' => $newEnd,
+                                'due_at' => $newEnd,
+                                'status' => \App\Models\Transaction::STATUS_DUE,
+                            ]);
+                        }
+                    } else {
+                        // Type unchanged: update amount if needed
+                        $latestSub->update(['amount' => $newAmount]);
+                        \App\Models\Transaction::where('company_id', $company->id)
+                            ->whereIn('status', [\App\Models\Transaction::STATUS_DUE, \App\Models\Transaction::STATUS_PENDING])
+                            ->update(['amount' => $newAmount]);
+                    }
+                }
+            } elseif ($newSubStatus === \App\Models\Subscription::STATUS_INACTIVE) {
+                if ($latestSub && $latestSub->status === \App\Models\Subscription::STATUS_ACTIVE) {
+                    $latestSub->update(['status' => \App\Models\Subscription::STATUS_INACTIVE]);
+                }
+                // Rule 18 & 33: Delete future/unpaid transactions that are Due or Pending when subscription becomes Inactive.
+                // NEVER delete Paid or Overdue transactions!
+                \App\Models\Transaction::where('company_id', $company->id)
+                    ->whereIn('status', [\App\Models\Transaction::STATUS_DUE, \App\Models\Transaction::STATUS_PENDING])
+                    ->delete();
+            }
 
             if ($loginUser) {
                 $loginUser->email = $data['user_email'];
@@ -198,34 +309,9 @@ class CompanyController extends Controller
                 module: 'companies',
                 description: "Company \"{$company->name}\" updated.",
                 company: $company,
-                // Login email is tracked alongside company fields since
-                // it's ordinary business data, not a credential — the
-                // password itself never reaches here regardless of
-                // whether it was changed (PRD #33/#54).
                 old: [...$originalCompanyValues, 'user_email' => $originalLoginEmail],
                 new: [...$company->only($companyFields), 'user_email' => $loginUser?->email],
             );
-
-            // Leaving either field blank keeps that credential unchanged —
-            // there's no "clear" control in this form (see edit view).
-            $fbrValues = array_filter([
-                'fbr_token_production' => $data['fbr_token_production'] ?? null,
-                'fbr_token_sandbox' => $data['fbr_token_sandbox'] ?? null,
-            ]);
-
-            if ($fbrValues !== []) {
-                $company->update($fbrValues);
-
-                // Deliberately no old/new values here — the fact that FBR
-                // credentials changed is logged, never their contents
-                // (PRD #21/#33/#54).
-                AuditLogger::log(
-                    action: 'fbr_credentials.updated',
-                    module: 'companies',
-                    description: "FBR credentials updated for \"{$company->name}\".",
-                    company: $company,
-                );
-            }
         });
 
         return redirect()

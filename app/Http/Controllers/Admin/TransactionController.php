@@ -46,25 +46,33 @@ class TransactionController extends Controller
      */
     public function markPaid(MarkTransactionPaidRequest $request, Transaction $transaction, MarkTransactionAsPaid $action): RedirectResponse
     {
+        $data = $request->validated();
         $screenshotPath = $request->hasFile('payment_screenshot')
             ? $request->file('payment_screenshot')->store('payment-screenshots')
+            : null;
+
+        $amount = isset($data['amount']) && filled($data['amount']) ? (float) $data['amount'] : null;
+        $subType = $data['subscription_type'] ?? null;
+        $startsAt = isset($data['starts_at']) && filled($data['starts_at'])
+            ? \Illuminate\Support\Carbon::parse($data['starts_at'])->startOfDay()
             : null;
 
         try {
             $paidTransaction = $action->handle(
                 $transaction,
-                $request->string('notes')->value() ?: null,
+                $data['notes'] ?? null,
                 $screenshotPath,
+                $amount,
+                $subType,
+                $startsAt,
             );
         } catch (TransactionAlreadyProcessedException) {
             if ($screenshotPath) {
                 Storage::delete($screenshotPath);
             }
 
-            return back()->withErrors(['status' => 'This transaction has already been processed.']);
+            return back()->withErrors(['status' => 'This transaction has already been processed or is not eligible for payment.']);
         }
-
-        Mail::to($paidTransaction->company->email)->send(new PaymentThankYou($paidTransaction));
 
         return back()->with('status', "Transaction \"{$transaction->invoice_number}\" marked as paid.");
     }

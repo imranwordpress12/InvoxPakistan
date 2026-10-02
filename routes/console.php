@@ -1,6 +1,7 @@
 <?php
 
 use App\Console\Commands\ProcessExpiredSubscriptions;
+use App\Console\Commands\SendDueEmails;
 use App\Console\Commands\SendPaymentReminders;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -23,4 +24,8 @@ Schedule::command(ProcessExpiredSubscriptions::class)
 
 Schedule::command(SendPaymentReminders::class)
     ->dailyAt('00:05')
+    ->withoutOverlapping();
+
+Schedule::command(SendDueEmails::class)
+    ->dailyAt('00:10')
     ->withoutOverlapping();

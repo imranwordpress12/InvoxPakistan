@@ -24,6 +24,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'billing_period_end',
     'due_at',
     'reminder_sent_at',
+    'due_email_sent_at',
     'paid_at',
     'notes',
     'payment_screenshot',
@@ -43,11 +44,15 @@ class Transaction extends Model
 
     public const TYPE_RENEWAL = 'renewal';
 
+    public const STATUS_DUE = 'due';
+
     public const STATUS_PENDING = 'pending';
 
     public const STATUS_UNPAID = self::STATUS_PENDING;
 
     public const STATUS_PAID = 'paid';
+
+    public const STATUS_OVERDUE = 'overdue';
 
     public const STATUS_CANCELLED = 'cancelled';
 
@@ -59,6 +64,7 @@ class Transaction extends Model
             'billing_period_end' => 'date',
             'due_at' => 'datetime',
             'reminder_sent_at' => 'datetime',
+            'due_email_sent_at' => 'datetime',
             'paid_at' => 'datetime',
         ];
     }

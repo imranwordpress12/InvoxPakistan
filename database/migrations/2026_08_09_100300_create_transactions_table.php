@@ -33,7 +33,7 @@ return new class extends Migration
             $table->enum('subscription_type', ['monthly', 'yearly']);
 
             $table->decimal('amount', 12, 2);
-            $table->enum('status', ['pending', 'paid', 'cancelled'])->default('pending');
+            $table->enum('status', ['due', 'pending', 'paid', 'overdue', 'cancelled'])->default('pending');
 
             $table->date('billing_period_start');
             $table->date('billing_period_end');

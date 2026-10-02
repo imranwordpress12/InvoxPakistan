@@ -16,6 +16,8 @@ class ProcessExpiredSubscriptionsTest extends TestCase
 
     public function test_a_lapsed_active_subscription_is_marked_pending_and_gets_a_renewal_invoice(): void
     {
+        Carbon::setTestNow('2026-08-02 01:00:00');
+
         $company = Company::factory()->create();
         $subscription = Subscription::factory()->for($company)->create([
             'type' => Subscription::TYPE_MONTHLY,
@@ -40,10 +42,14 @@ class ProcessExpiredSubscriptionsTest extends TestCase
         $this->assertSame('2026-08-02', $transaction->billing_period_start->toDateString());
         $this->assertSame('2026-09-01', $transaction->billing_period_end->toDateString());
         $this->assertSame('2026-08-01', $transaction->due_at->toDateString());
+
+        Carbon::setTestNow();
     }
 
     public function test_a_yearly_subscriptions_renewal_invoice_covers_a_full_year(): void
     {
+        Carbon::setTestNow('2026-01-02 01:00:00');
+
         $subscription = Subscription::factory()->for(Company::factory())->create([
             'type' => Subscription::TYPE_YEARLY,
             'status' => Subscription::STATUS_ACTIVE,
@@ -54,7 +60,9 @@ class ProcessExpiredSubscriptionsTest extends TestCase
 
         $transaction = $subscription->transactions()->first();
         $this->assertSame('2026-01-02', $transaction->billing_period_start->toDateString());
-        $this->assertSame('2027-01-02', $transaction->billing_period_end->toDateString());
+        $this->assertSame('2027-01-01', $transaction->billing_period_end->toDateString());
+
+        Carbon::setTestNow();
     }
 
     public function test_a_still_active_subscription_is_left_untouched(): void

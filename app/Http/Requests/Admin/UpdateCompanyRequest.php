@@ -44,9 +44,38 @@ class UpdateCompanyRequest extends FormRequest
             // Optional: leaving it blank keeps the current password.
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
 
-            // Optional: leaving either blank keeps that credential unchanged.
+            // Subscription Information
+            'subscription_status' => ['nullable', Rule::in([\App\Models\Subscription::STATUS_ACTIVE, \App\Models\Subscription::STATUS_INACTIVE])],
+            'subscription_starts_at' => [
+                'nullable',
+                'date',
+                function ($attribute, $value, $fail) use ($company) {
+                    $newStatus = $this->input('subscription_status');
+                    $latestSub = $company->latestSubscription;
+                    $isActivating = $newStatus === \App\Models\Subscription::STATUS_ACTIVE
+                        && (! $latestSub || $latestSub->status !== \App\Models\Subscription::STATUS_ACTIVE);
+
+                    if ($isActivating) {
+                        if (blank($value)) {
+                            $fail('Subscription start date is required when activating a subscription.');
+
+                            return;
+                        }
+                        $date = \Illuminate\Support\Carbon::parse($value)->startOfDay();
+                        if ($date->isPast() && ! $date->isToday()) {
+                            $fail('Subscription start date cannot be a past date.');
+                        }
+                    }
+                },
+            ],
+            'subscription_type' => ['nullable', Rule::in([\App\Models\Subscription::TYPE_MONTHLY, \App\Models\Subscription::TYPE_YEARLY])],
+            'amount' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
+
+            // FBR credentials
+            'fbr_status' => ['nullable', Rule::in([Company::FBR_STATUS_ACTIVE, Company::FBR_STATUS_INACTIVE])],
             'fbr_token_production' => ['nullable', 'string'],
             'fbr_token_sandbox' => ['nullable', 'string'],
         ];
     }
 }
+

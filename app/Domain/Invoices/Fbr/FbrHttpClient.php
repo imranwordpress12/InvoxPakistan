@@ -31,11 +31,15 @@ class FbrHttpClient
      */
     public function get(int $companyId, string $path, array $query = []): array
     {
-        $token = Company::whereKey($companyId)->value('fbr_token_sandbox');
+        $company = Company::find($companyId);
+        $token = ($company?->fbr_status === Company::FBR_STATUS_ACTIVE)
+            ? $company?->fbr_token_production
+            : $company?->fbr_token_sandbox;
 
         if (blank($token)) {
+            $type = ($company?->fbr_status === Company::FBR_STATUS_ACTIVE) ? 'Production' : 'Sandbox';
             throw new FbrReferenceApiException(
-                'Configuration error: no FBR Sandbox token is set up for this company. '.
+                "Configuration error: no FBR {$type} token is set up for this company. ".
                 'Ask an administrator to add one under Company Settings.'
             );
         }

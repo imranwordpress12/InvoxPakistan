@@ -12,7 +12,7 @@ class TransactionBillingPeriod
     public static function startDateFor(string $type, CarbonInterface $date): CarbonInterface
     {
         return match ($type) {
-            Subscription::TYPE_MONTHLY => $date->copy()->startOfMonth(),
+            Subscription::TYPE_MONTHLY => $date->copy(),
             Subscription::TYPE_YEARLY => $date->copy(),
             default => throw new InvalidArgumentException("Unknown subscription type [{$type}]."),
         };
@@ -20,10 +20,6 @@ class TransactionBillingPeriod
 
     public static function endDateFor(string $type, CarbonInterface $date): CarbonInterface
     {
-        return match ($type) {
-            Subscription::TYPE_MONTHLY => $date->copy()->endOfMonth(),
-            Subscription::TYPE_YEARLY => SubscriptionPeriod::endDateFor($type, $date),
-            default => throw new InvalidArgumentException("Unknown subscription type [{$type}]."),
-        };
+        return SubscriptionPeriod::endDateFor($type, $date);
     }
 }

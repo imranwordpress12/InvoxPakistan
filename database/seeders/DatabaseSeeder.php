@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
             UnitOfMeasureSeeder::class,
             TaxRateSeeder::class,
             MarkoTradersCompanySeeder::class,
+            TransactionCommandTestingSeeder::class,
             CustomerSeeder::class,
             ItemSeeder::class,
             InvoiceSeeder::class,

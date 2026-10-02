@@ -16,7 +16,7 @@ class PaymentReminder extends Mailable
 
     public function __construct(
         public Transaction $transaction,
-        public Customer $customer,
+        public ?Customer $customer = null,
     ) {
     }
 

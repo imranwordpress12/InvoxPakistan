@@ -9,6 +9,7 @@ use Illuminate\Database\Seeder;
 use App\Models\Company;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Models\Customer;
 use Illuminate\Support\Facades\DB;
 
 class MarkoTradersCompanySeeder extends Seeder
@@ -78,6 +79,21 @@ class MarkoTradersCompanySeeder extends Seeder
                 'due_at' => $nextDueAt,
                 'paid_at' => null,
                 'notes' => null,
+            ]);
+
+            // 4. Create the Buyer Customer linked to this Company
+            Customer::create([
+                'company_id'              => $company->id,
+                'business_name'           => 'JADE E-SERVICES PAKISTAN (PRIVATE) LIMITED',
+                'ntn_cnic'                => '4012118',
+                'province'                => 'PUNJAB',
+                'buyer_registration_type' => 'registered',
+                'strn'                    => null,
+                'contact_person'          => null,
+                'email'                   => null,
+                'contact_number'          => null,
+                'address'                 => 'Punjab, Pakistan',
+                'status'                  => 'active',
             ]);
         });
     }

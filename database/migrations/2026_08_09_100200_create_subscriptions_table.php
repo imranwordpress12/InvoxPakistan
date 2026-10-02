@@ -23,7 +23,7 @@ return new class extends Migration
             // Payment status belongs here, NOT on companies (PRD "Critical
             // Business Rules"). "Pending Companies" is derived by filtering
             // on this status, not a separate entity/table.
-            $table->enum('status', ['active', 'pending', 'expired', 'cancelled'])->default('pending');
+            $table->enum('status', ['active', 'inactive', 'pending', 'expired', 'cancelled'])->default('pending');
 
             $table->dateTime('starts_at');
             $table->dateTime('ends_at');

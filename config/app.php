@@ -53,6 +53,7 @@ return [
     */
 
     'url' => env('APP_URL', 'http://localhost'),
+    'logo_url' => env('APP_LOGO', 'http://localhost/images/logo.png'),
 
     /*
     |--------------------------------------------------------------------------

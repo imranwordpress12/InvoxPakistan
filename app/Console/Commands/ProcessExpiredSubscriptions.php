@@ -91,7 +91,25 @@ class ProcessExpiredSubscriptions extends Command
             });
         }
 
-        $this->info("Marked {$markedPending} subscription(s) pending; created {$invoicesCreated} renewal invoice(s); {$alreadyHadAnInvoice} already had one pending.");
+        // Transition pending transactions to overdue when billing_period_end has passed (Rule 12 & 35)
+        $overdueCandidateIds = Transaction::query()
+            ->where('status', Transaction::STATUS_PENDING)
+            ->whereDate('billing_period_end', '<', now()->toDateString())
+            ->pluck('id');
+
+        $markedOverdue = 0;
+        foreach ($overdueCandidateIds as $txId) {
+            DB::transaction(function () use ($txId, &$markedOverdue) {
+                $tx = Transaction::whereKey($txId)->lockForUpdate()->first();
+                if ($tx && $tx->status === Transaction::STATUS_PENDING && $tx->billing_period_end->startOfDay()->isPast() && ! $tx->billing_period_end->isToday()) {
+                    $tx->status = Transaction::STATUS_OVERDUE;
+                    $tx->save();
+                    $markedOverdue++;
+                }
+            });
+        }
+
+        $this->info("Marked {$markedPending} subscription(s) pending; created {$invoicesCreated} renewal invoice(s); {$alreadyHadAnInvoice} already had one pending; marked {$markedOverdue} transaction(s) overdue.");
 
         return self::SUCCESS;
     }

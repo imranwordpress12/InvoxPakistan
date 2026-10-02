@@ -20,15 +20,21 @@ class MarkTransactionAsPaidTest extends TestCase
     public function test_it_marks_a_pending_transaction_paid_and_renews_the_subscription(): void
     {
         $company = Company::factory()->create();
+        $today = now()->startOfDay();
+        $expectedEnd = \App\Domain\Subscriptions\SubscriptionPeriod::endDateFor(Subscription::TYPE_MONTHLY, $today);
+
         $subscription = Subscription::factory()->for($company)->create([
+            'type' => Subscription::TYPE_MONTHLY,
             'status' => Subscription::STATUS_PENDING,
-            'starts_at' => Carbon::parse('2026-06-01'),
-            'ends_at' => Carbon::parse('2026-07-01'),
+            'starts_at' => $today,
+            'ends_at' => $expectedEnd,
         ]);
         $transaction = Transaction::factory()->pending()->create([
             'company_id' => $company->id,
             'subscription_id' => $subscription->id,
-            'due_at' => Carbon::parse('2026-07-15'),
+            'billing_period_start' => $today,
+            'billing_period_end' => $expectedEnd,
+            'due_at' => $expectedEnd,
         ]);
 
         $updated = (new MarkTransactionAsPaid)->handle($transaction);
@@ -38,12 +44,14 @@ class MarkTransactionAsPaidTest extends TestCase
 
         $subscription->refresh();
         $this->assertSame(Subscription::STATUS_ACTIVE, $subscription->status);
-        $this->assertSame($updated->paid_at->toDateString(), $subscription->starts_at->toDateString());
+        $this->assertSame($updated->billing_period_start->toDateString(), $subscription->starts_at->toDateString());
         $this->assertTrue($subscription->isActive());
 
         $nextTransaction = $subscription->transactions()->where('id', '!=', $updated->id)->first();
         $this->assertNotNull($nextTransaction);
-        $this->assertSame('2026-08-14', $nextTransaction->due_at->toDateString());
+        $nextStart = $expectedEnd->copy()->addDay()->startOfDay();
+        $nextEnd = \App\Domain\Subscriptions\SubscriptionPeriod::endDateFor(Subscription::TYPE_MONTHLY, $nextStart);
+        $this->assertSame($nextEnd->toDateString(), $nextTransaction->due_at->toDateString());
     }
 
     public function test_it_saves_the_given_notes(): void

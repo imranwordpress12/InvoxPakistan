@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <body>
-    <p>Hello {{ $customer->business_name }},</p>
+    <p>Hello {{ $customer?->business_name ?? $transaction->company->name }},</p>
 
     <p>
         This is a reminder that your subscription payment of

@@ -32,6 +32,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'business_registration_number',
     'fbr_token_production',
     'fbr_token_sandbox',
+    'fbr_status',
     'status',
 ])]
 class Company extends Model
@@ -42,6 +43,10 @@ class Company extends Model
     public const STATUS_ACTIVE = 'active';
 
     public const STATUS_INACTIVE = 'inactive';
+
+    public const FBR_STATUS_ACTIVE = 'active';
+
+    public const FBR_STATUS_INACTIVE = 'inactive';
 
     public function users(): HasMany
     {

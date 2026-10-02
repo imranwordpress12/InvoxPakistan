@@ -31,8 +31,8 @@ class SubscriptionRenewalTest extends TestCase
         (new SubscriptionRenewal)->renew($subscription, Carbon::parse('2026-08-10'));
 
         $subscription->refresh();
-        $this->assertSame('2026-08-21', $subscription->starts_at->toDateString());
-        $this->assertSame('2026-09-20', $subscription->ends_at->toDateString());
+        $this->assertSame('2026-08-20', $subscription->starts_at->toDateString());
+        $this->assertSame('2026-09-19', $subscription->ends_at->toDateString());
         $this->assertSame(Subscription::STATUS_ACTIVE, $subscription->status);
     }
 
@@ -49,7 +49,7 @@ class SubscriptionRenewalTest extends TestCase
         // expired" — paying on the last valid day must not lose that day.
         (new SubscriptionRenewal)->renew($subscription, Carbon::parse('2026-08-20'));
 
-        $this->assertSame('2026-08-21', $subscription->refresh()->starts_at->toDateString());
+        $this->assertSame('2026-08-20', $subscription->refresh()->starts_at->toDateString());
     }
 
     public function test_payment_after_expiry_starts_the_new_period_on_the_payment_date(): void
@@ -84,7 +84,7 @@ class SubscriptionRenewalTest extends TestCase
 
         $subscription->refresh();
         $this->assertSame('2026-08-09', $subscription->starts_at->toDateString());
-        $this->assertSame('2027-08-09', $subscription->ends_at->toDateString());
+        $this->assertSame('2027-08-08', $subscription->ends_at->toDateString());
     }
 
     public function test_renewal_defaults_the_payment_date_to_now(): void

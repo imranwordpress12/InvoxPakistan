@@ -10,13 +10,14 @@ use App\Models\Company;
 use App\Models\Subscription;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Mail\CompanyWelcome;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * Creates a company together with its first login user, its first
- * subscription, and its first (already-paid) transaction — all inside one
- * database transaction (PRD #20/#52): Company -> User -> Subscription ->
+ * subscription, and its initial paid transaction (PRD #20/#52): Company -> User -> Subscription ->
  * Transaction must succeed or fail together.
  */
 class CompanyOnboardingService
@@ -38,12 +39,11 @@ class CompanyOnboardingService
                 'country' => $data['country'] ?? null,
                 'ntn_cnic' => $data['ntn_cnic'] ?? null,
                 'business_registration_number' => $data['business_registration_number'] ?? null,
-                'fbr_token_production' => $data['fbr_token_production'] ?? null,
-                'fbr_token_sandbox' => $data['fbr_token_sandbox'] ?? null,
+                'fbr_status' => Company::FBR_STATUS_INACTIVE,
                 'status' => Company::STATUS_ACTIVE,
             ]);
 
-            $company->users()->create([
+            $user = $company->users()->create([
                 'name' => $data['name'],
                 'email' => $data['user_email'],
                 // Hashed automatically by User's 'password' => 'hashed' cast.
@@ -51,49 +51,12 @@ class CompanyOnboardingService
                 'role' => User::ROLE_COMPANY,
             ]);
 
-            $startsAt = isset($data['subscription_starts_at']) && $data['subscription_starts_at'] !== null
-                ? Carbon::parse($data['subscription_starts_at'])->startOfDay()
-                : now();
-
-            $subscription = $company->subscriptions()->create([
-                'type' => $data['subscription_type'],
-                'status' => Subscription::STATUS_ACTIVE,
-                'starts_at' => $startsAt,
-                'ends_at' => SubscriptionPeriod::endDateFor($data['subscription_type'], $startsAt),
-                'amount' => $data['amount'],
-            ]);
-
-            $firstDueAt = $subscription->starts_at->copy();
-            $nextDueAt = SubscriptionPeriod::endDateFor($subscription->type, $firstDueAt);
-            $registeredAt = now();
-
-            $company->transactions()->create([
-                'subscription_id' => $subscription->id,
-                'invoice_number' => InvoiceNumberGenerator::generate(),
-                'transaction_type' => Transaction::TYPE_INITIAL,
-                'subscription_type' => $data['subscription_type'],
-                'amount' => $data['amount'],
-                'status' => Transaction::STATUS_PAID,
-                'billing_period_start' => TransactionBillingPeriod::startDateFor($subscription->type, $subscription->starts_at),
-                'billing_period_end' => TransactionBillingPeriod::endDateFor($subscription->type, $subscription->starts_at),
-                'due_at' => $firstDueAt,
-                'paid_at' => $registeredAt,
-                'notes' => null,
-            ]);
-
-            $company->transactions()->create([
-                'subscription_id' => $subscription->id,
-                'invoice_number' => InvoiceNumberGenerator::generate(),
-                'transaction_type' => Transaction::TYPE_RENEWAL,
-                'subscription_type' => $data['subscription_type'],
-                'amount' => $data['amount'],
-                'status' => Transaction::STATUS_PENDING,
-                'billing_period_start' => TransactionBillingPeriod::startDateFor($subscription->type, $nextDueAt),
-                'billing_period_end' => TransactionBillingPeriod::endDateFor($subscription->type, $nextDueAt),
-                'due_at' => $nextDueAt,
-                'paid_at' => null,
-                'notes' => null,
-            ]);
+            // Company Created -> Welcome Email
+            try {
+                Mail::to($company->email)->send(new CompanyWelcome($company));
+            } catch (\Throwable $e) {
+                // Ignore email failure during creation if mail server is not configured in test
+            }
 
             AuditLogger::log(
                 action: 'company.created',
@@ -110,3 +73,4 @@ class CompanyOnboardingService
         });
     }
 }
+

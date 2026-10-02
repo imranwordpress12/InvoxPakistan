@@ -7,50 +7,40 @@
 
     <title>@yield('title', config('app.name', 'Invox Pakistan'))</title>
 
-    <!-- Bootstrap 5 (CDN) -->
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-        integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr"
-        crossorigin="anonymous">
-
-    <!-- Bootstrap Icons (CDN) -->
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
-        rel="stylesheet">
-
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 
     @stack('styles')
 </head>
-<body class="d-flex align-items-center min-vh-100 bg-light">
+<body class="d-flex align-items-center min-vh-100 bg-slate-100 py-5">
 
     <main class="container">
         <div class="row justify-content-center">
-            <div class="col-11 col-sm-8 col-md-6 col-lg-4">
+            <div class="col-12 col-sm-10 col-md-8 col-lg-5 col-xl-4">
 
                 <div class="text-center mb-4">
-                    <a href="{{ url('/') }}" class="text-decoration-none text-dark">
-                        <i class="bi bi-building-check display-6 text-primary"></i>
-                        <div class="fw-semibold mt-1">Invox Pakistan</div>
+                    <a href="{{ url('/') }}" class="text-decoration-none d-inline-flex align-items-center gap-2">
+                        <img src="{{ asset('images/logo.jpeg') }}" alt="Invox Pakistan Logo">
                     </a>
                 </div>
 
-                <div class="card shadow-sm">
-                    <div class="card-body p-4">
+                <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                    <div class="card-body p-4 p-md-5">
                         @yield('content')
                     </div>
+                </div>
+
+                <div class="text-center mt-4 text-muted small">
+                    &copy; {{ date('Y') }} Invox Pakistan. Secure Enterprise Portal.
                 </div>
 
             </div>
         </div>
     </main>
 
-    <script
-        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
-        crossorigin="anonymous"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     @stack('scripts')
 </body>
 </html>
