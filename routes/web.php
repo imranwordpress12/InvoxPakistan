@@ -5,6 +5,18 @@ use App\Http\Controllers\PublicPagesController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\SeoFilesController;
 use App\Http\Controllers\DevSeoValidatorController;
+use App\Mail\CompanyWelcome;
+use Illuminate\Support\Facades\Mail;
+/*
+|--------------------------------------------------------------------------
+| Test Email Route
+|--------------------------------------------------------------------------
+*/
+Route::get('/test-email', function () {
+    $company = App\Models\Company::where('id', 2)->first();
+    Mail::to($company->email)->send(new CompanyWelcome($company));
+    return 'Test email sent to '.$company->email;
+});
 
 /*
 |--------------------------------------------------------------------------
