@@ -19,6 +19,7 @@
         <div>
             <h1 class="h3 fw-bold text-dark mb-1">Company Dashboard</h1>
             <p class="text-muted small mb-0">Overview of FBR invoice submissions, total volumes, and daily performance metrics.</p>
+            <p id="dashboard-refresh-status" class="text-muted extra-small mb-0" aria-live="polite">Live data enabled; refreshing every 30 seconds.</p>
         </div>
         <div class="mt-3 mt-md-0">
             <form method="GET" action="{{ route('company.dashboard') }}" class="d-flex flex-wrap align-items-center gap-2">
@@ -44,16 +45,16 @@
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
                             <span class="text-uppercase tracking-wider extra-small fw-bold text-muted">Total Invoices</span>
-                            <div class="display-6 fw-bold text-dark my-1">{{ $totalStats['count'] }}</div>
+                            <div class="display-6 fw-bold text-dark my-1" data-dashboard-stat="total.count">{{ $totalStats['count'] }}</div>
                         </div>
                         <div class="stat-icon bg-primary-subtle text-primary">
                             <i class="bi bi-receipt"></i>
                         </div>
                     </div>
                     <div class="pt-2 border-top extra-small text-muted d-flex flex-column gap-1">
-                        <div class="d-flex justify-content-between"><span>Total Amount:</span> <strong class="text-dark">Rs {{ number_format($totalStats['total_amount'], 2) }}</strong></div>
-                        <div class="d-flex justify-content-between"><span>Excl. Sales Tax:</span> <strong class="text-dark">Rs {{ number_format($totalStats['total_excl_st'], 2) }}</strong></div>
-                        <div class="d-flex justify-content-between"><span>Total Sales Tax:</span> <strong class="text-primary">Rs {{ number_format($totalStats['total_sales_tax'], 2) }}</strong></div>
+                        <div class="d-flex justify-content-between"><span>Total Amount:</span> <strong class="text-dark" data-dashboard-stat="total.total_amount">Rs {{ number_format($totalStats['total_amount'], 2) }}</strong></div>
+                        <div class="d-flex justify-content-between"><span>Excl. Sales Tax:</span> <strong class="text-dark" data-dashboard-stat="total.total_excl_st">Rs {{ number_format($totalStats['total_excl_st'], 2) }}</strong></div>
+                        <div class="d-flex justify-content-between"><span>Total Sales Tax:</span> <strong class="text-primary" data-dashboard-stat="total.total_sales_tax">Rs {{ number_format($totalStats['total_sales_tax'], 2) }}</strong></div>
                     </div>
                 </div>
             </div>
@@ -65,16 +66,16 @@
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
                             <span class="text-uppercase tracking-wider extra-small fw-bold text-muted">Successful Invoices</span>
-                            <div class="display-6 fw-bold text-success my-1">{{ $successfulStats['count'] }}</div>
+                            <div class="display-6 fw-bold text-success my-1" data-dashboard-stat="successful.count">{{ $successfulStats['count'] }}</div>
                         </div>
                         <div class="stat-icon bg-success-subtle text-success">
                             <i class="bi bi-check-circle"></i>
                         </div>
                     </div>
                     <div class="pt-2 border-top extra-small text-muted d-flex flex-column gap-1">
-                        <div class="d-flex justify-content-between"><span>Total Amount:</span> <strong class="text-dark">Rs {{ number_format($successfulStats['total_amount'], 2) }}</strong></div>
-                        <div class="d-flex justify-content-between"><span>Excl. Sales Tax:</span> <strong class="text-dark">Rs {{ number_format($successfulStats['total_excl_st'], 2) }}</strong></div>
-                        <div class="d-flex justify-content-between"><span>Total Sales Tax:</span> <strong class="text-success">Rs {{ number_format($successfulStats['total_sales_tax'], 2) }}</strong></div>
+                        <div class="d-flex justify-content-between"><span>Total Amount:</span> <strong class="text-dark" data-dashboard-stat="successful.total_amount">Rs {{ number_format($successfulStats['total_amount'], 2) }}</strong></div>
+                        <div class="d-flex justify-content-between"><span>Excl. Sales Tax:</span> <strong class="text-dark" data-dashboard-stat="successful.total_excl_st">Rs {{ number_format($successfulStats['total_excl_st'], 2) }}</strong></div>
+                        <div class="d-flex justify-content-between"><span>Total Sales Tax:</span> <strong class="text-success" data-dashboard-stat="successful.total_sales_tax">Rs {{ number_format($successfulStats['total_sales_tax'], 2) }}</strong></div>
                     </div>
                 </div>
             </div>
@@ -86,16 +87,16 @@
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
                             <span class="text-uppercase tracking-wider extra-small fw-bold text-muted">Failed Submissions</span>
-                            <div class="display-6 fw-bold text-danger my-1">{{ $failedStats['count'] }}</div>
+                            <div class="display-6 fw-bold text-danger my-1" data-dashboard-stat="failed.count">{{ $failedStats['count'] }}</div>
                         </div>
                         <div class="stat-icon bg-danger-subtle text-danger">
                             <i class="bi bi-x-circle"></i>
                         </div>
                     </div>
                     <div class="pt-2 border-top extra-small text-muted d-flex flex-column gap-1">
-                        <div class="d-flex justify-content-between"><span>Total Amount:</span> <strong class="text-dark">Rs {{ number_format($failedStats['total_amount'], 2) }}</strong></div>
-                        <div class="d-flex justify-content-between"><span>Excl. Sales Tax:</span> <strong class="text-dark">Rs {{ number_format($failedStats['total_excl_st'], 2) }}</strong></div>
-                        <div class="d-flex justify-content-between"><span>Total Sales Tax:</span> <strong class="text-danger">Rs {{ number_format($failedStats['total_sales_tax'], 2) }}</strong></div>
+                        <div class="d-flex justify-content-between"><span>Total Amount:</span> <strong class="text-dark" data-dashboard-stat="failed.total_amount">Rs {{ number_format($failedStats['total_amount'], 2) }}</strong></div>
+                        <div class="d-flex justify-content-between"><span>Excl. Sales Tax:</span> <strong class="text-dark" data-dashboard-stat="failed.total_excl_st">Rs {{ number_format($failedStats['total_excl_st'], 2) }}</strong></div>
+                        <div class="d-flex justify-content-between"><span>Total Sales Tax:</span> <strong class="text-danger" data-dashboard-stat="failed.total_sales_tax">Rs {{ number_format($failedStats['total_sales_tax'], 2) }}</strong></div>
                     </div>
                 </div>
             </div>
@@ -134,7 +135,7 @@
     const dailyStatus = @json($dailyStatus->values());
     const dailyAmounts = @json($dailyAmounts->values());
 
-    new Chart(document.getElementById('dailyStatusChart'), {
+    const dailyStatusChart = new Chart(document.getElementById('dailyStatusChart'), {
         type: 'bar',
         data: {
             labels: dailyStatus.map(d => d.date),
@@ -150,7 +151,7 @@
         },
     });
 
-    new Chart(document.getElementById('dailyAmountsChart'), {
+    const dailyAmountsChart = new Chart(document.getElementById('dailyAmountsChart'), {
         type: 'bar',
         data: {
             labels: dailyAmounts.map(d => d.date),
@@ -165,5 +166,67 @@
             scales: { y: { beginAtZero: true } },
         },
     });
+
+    const refreshStatus = document.getElementById('dashboard-refresh-status');
+    const statsUrl = @json(route('company.dashboard.stats'));
+    const dateFromInput = document.getElementById('date_from');
+    const dateToInput = document.getElementById('date_to');
+    const statFields = ['count', 'total_amount', 'total_excl_st', 'total_sales_tax'];
+
+    function formatCurrency(amount) {
+        return `Rs ${Number(amount).toLocaleString('en-PK', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        })}`;
+    }
+
+    async function refreshDashboardStats() {
+        const url = new URL(statsUrl, window.location.origin);
+        url.searchParams.set('date_from', dateFromInput.value);
+        url.searchParams.set('date_to', dateToInput.value);
+
+        try {
+            const response = await fetch(url, {
+                headers: { Accept: 'application/json' },
+                cache: 'no-store',
+            });
+
+            if (!response.ok) {
+                throw new Error(`Dashboard stats request failed with HTTP ${response.status}.`);
+            }
+
+            const stats = await response.json();
+
+            for (const group of ['total', 'successful', 'failed']) {
+                for (const field of statFields) {
+                    const element = document.querySelector(`[data-dashboard-stat="${group}.${field}"]`);
+                    const value = stats[`${group}Stats`][field];
+
+                    element.textContent = field === 'count' ? value : formatCurrency(value);
+                }
+            }
+
+            dailyStatusChart.data.labels = stats.dailyStatus.map((day) => day.date);
+            dailyStatusChart.data.datasets[0].data = stats.dailyStatus.map((day) => day.successful);
+            dailyStatusChart.data.datasets[1].data = stats.dailyStatus.map((day) => day.failed);
+            dailyStatusChart.update();
+
+            dailyAmountsChart.data.labels = stats.dailyAmounts.map((day) => day.date);
+            dailyAmountsChart.data.datasets[0].data = stats.dailyAmounts.map((day) => day.successful_amount);
+            dailyAmountsChart.data.datasets[1].data = stats.dailyAmounts.map((day) => day.failed_amount);
+            dailyAmountsChart.update();
+
+            refreshStatus.textContent = `Live data updated at ${new Date().toLocaleTimeString()}.`;
+            refreshStatus.classList.remove('text-danger');
+            refreshStatus.classList.add('text-muted');
+        } catch (error) {
+            console.error('Unable to refresh company dashboard statistics.', error);
+            refreshStatus.textContent = 'Live data update failed. Retrying in 30 seconds.';
+            refreshStatus.classList.remove('text-muted');
+            refreshStatus.classList.add('text-danger');
+        }
+    }
+
+    window.setInterval(refreshDashboardStats, 30_000);
 </script>
 @endpush

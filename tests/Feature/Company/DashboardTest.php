@@ -3,6 +3,7 @@
 namespace Tests\Feature\Company;
 
 use App\Models\Company;
+use App\Models\Invoice;
 use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -34,9 +35,76 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($user)->get(route('company.dashboard'));
 
         $response->assertOk();
-        $response->assertSee('Stats of Invoices Submitted to FBR');
+        $response->assertSee('Company Dashboard');
+        $response->assertSee('refreshing every 30 seconds');
+        $response->assertSee('refreshDashboardStats', false);
         $response->assertDontSee('expired or payment is pending');
         $response->assertDontSee('will expire in');
+    }
+
+    public function test_live_dashboard_stats_use_submission_date_and_only_include_the_authenticated_company(): void
+    {
+        $this->travelTo(now()->setDate(2026, 10, 5)->setTime(12, 0));
+
+        $company = Company::factory()->create();
+        Subscription::factory()->for($company)->create([
+            'status' => Subscription::STATUS_ACTIVE,
+            'ends_at' => now()->addDays(30),
+        ]);
+        $user = User::factory()->company($company)->create();
+
+        Invoice::factory()->create([
+            'company_id' => $company->id,
+            'status' => Invoice::STATUS_SUCCESSFUL,
+            'invoice_date' => '2026-09-20',
+            'submitted_at' => now(),
+            'total_amount' => 120,
+            'total_excl_st' => 100,
+            'total_sales_tax' => 20,
+        ]);
+        Invoice::factory()->create([
+            'company_id' => $company->id,
+            'status' => Invoice::STATUS_FAILED,
+            'invoice_date' => '2026-09-21',
+            'submitted_at' => now(),
+            'total_amount' => 60,
+            'total_excl_st' => 50,
+            'total_sales_tax' => 10,
+        ]);
+        Invoice::factory()->create([
+            'company_id' => $company->id,
+            'status' => Invoice::STATUS_SUCCESSFUL,
+            'submitted_at' => now()->subDay(),
+            'total_amount' => 900,
+        ]);
+        Invoice::factory()->create([
+            'status' => Invoice::STATUS_SUCCESSFUL,
+            'submitted_at' => now(),
+            'total_amount' => 5000,
+        ]);
+
+        $response = $this->actingAs($user)->getJson(route('company.dashboard.stats', [
+            'date_from' => '2026-10-05',
+            'date_to' => '2026-10-05',
+        ]));
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('totalStats.count', 2)
+            ->assertJsonPath('totalStats.total_amount', 180)
+            ->assertJsonPath('totalStats.total_excl_st', 150)
+            ->assertJsonPath('totalStats.total_sales_tax', 30)
+            ->assertJsonPath('successfulStats.count', 1)
+            ->assertJsonPath('failedStats.count', 1)
+            ->assertJsonPath('dailyStatus.0.successful', 1)
+            ->assertJsonPath('dailyStatus.0.failed', 1)
+            ->assertJsonPath('dailyAmounts.0.successful_amount', 120)
+            ->assertJsonPath('dailyAmounts.0.failed_amount', 60);
+
+        $cacheControl = $response->headers->get('Cache-Control');
+
+        $this->assertStringContainsString('private', $cacheControl);
+        $this->assertStringContainsString('no-store', $cacheControl);
     }
 
     public function test_it_warns_when_the_subscription_is_close_to_expiry(): void

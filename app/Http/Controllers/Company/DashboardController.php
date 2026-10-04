@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Company;
 
 use App\Http\Controllers\Controller;
 use App\Models\Invoice;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\View\View;
@@ -26,21 +28,49 @@ class DashboardController extends Controller
     {
         $user = $request->user()->load('company.latestSubscription');
         $company = $user->company;
-        $subscription = $company?->latestSubscription;
+        $statistics = $this->statistics($request);
 
+        return view('company.dashboard', [
+            'subscription' => $company?->latestSubscription,
+            ...$statistics,
+        ]);
+    }
+
+    public function stats(Request $request): JsonResponse
+    {
+        return response()->json($this->statistics($request))
+            ->header('Cache-Control', 'private, no-store');
+    }
+
+    /**
+     * Calculate submission statistics by the date the invoice was sent to FBR,
+     * rather than the invoice's issue date.
+     *
+     * @return array{
+     *     dateFrom: Carbon,
+     *     dateTo: Carbon,
+     *     totalStats: array{count: int, total_amount: float|int, total_excl_st: float|int, total_sales_tax: float|int},
+     *     successfulStats: array{count: int, total_amount: float|int, total_excl_st: float|int, total_sales_tax: float|int},
+     *     failedStats: array{count: int, total_amount: float|int, total_excl_st: float|int, total_sales_tax: float|int},
+     *     dailyStatus: \Illuminate\Support\Collection,
+     *     dailyAmounts: \Illuminate\Support\Collection
+     * }
+     */
+    private function statistics(Request $request): array
+    {
         $dateFrom = $request->date('date_from')?->startOfDay() ?? now()->subDays(6)->startOfDay();
         $dateTo = $request->date('date_to')?->endOfDay() ?? now()->endOfDay();
 
         $submitted = Invoice::query()
-            ->where('company_id', $company?->id)
+            ->where('company_id', $request->user()->company_id)
             ->whereIn('status', [Invoice::STATUS_SUBMITTED, Invoice::STATUS_SUCCESSFUL, Invoice::STATUS_FAILED])
-            ->whereBetween('invoice_date', [$dateFrom->toDateString(), $dateTo->toDateString()])
+            ->whereBetween('submitted_at', [$dateFrom, $dateTo])
             ->get();
 
         $successful = $submitted->where('status', Invoice::STATUS_SUCCESSFUL);
         $failed = $submitted->where('status', Invoice::STATUS_FAILED);
 
-        $summarize = fn ($invoices) => [
+        $summarize = fn (Collection $invoices): array => [
             'count' => $invoices->count(),
             'total_amount' => $invoices->sum('total_amount'),
             'total_excl_st' => $invoices->sum('total_excl_st'),
@@ -53,7 +83,7 @@ class DashboardController extends Controller
         }
 
         $dailyStatus = $days->map(function ($date) use ($submitted) {
-            $onDate = $submitted->filter(fn ($invoice) => $invoice->invoice_date->toDateString() === $date);
+            $onDate = $submitted->filter(fn ($invoice) => $invoice->submitted_at->toDateString() === $date);
 
             return [
                 'date' => Carbon::parse($date)->format('d M'),
@@ -63,7 +93,7 @@ class DashboardController extends Controller
         });
 
         $dailyAmounts = $days->map(function ($date) use ($submitted) {
-            $onDate = $submitted->filter(fn ($invoice) => $invoice->invoice_date->toDateString() === $date);
+            $onDate = $submitted->filter(fn ($invoice) => $invoice->submitted_at->toDateString() === $date);
 
             return [
                 'date' => Carbon::parse($date)->format('d M'),
@@ -72,8 +102,7 @@ class DashboardController extends Controller
             ];
         });
 
-        return view('company.dashboard', [
-            'subscription' => $subscription,
+        return [
             'dateFrom' => $dateFrom,
             'dateTo' => $dateTo,
             'totalStats' => $summarize($submitted),
@@ -81,6 +110,6 @@ class DashboardController extends Controller
             'failedStats' => $summarize($failed),
             'dailyStatus' => $dailyStatus,
             'dailyAmounts' => $dailyAmounts,
-        ]);
+        ];
     }
 }

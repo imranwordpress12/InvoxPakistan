@@ -38,6 +38,7 @@ Route::prefix('company')->name('company.')->group(function () {
         // while its subscription is active (PRD #10/#11).
         Route::middleware('subscription')->group(function () {
             Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+            Route::get('dashboard/stats', [DashboardController::class, 'stats'])->name('dashboard.stats');
 
             // "invoices/create", "invoices/drafts", "invoices/bulk-upload"
             // and "invoices/reference/*" must all be registered before
