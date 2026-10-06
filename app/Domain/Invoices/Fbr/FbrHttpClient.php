@@ -4,8 +4,10 @@ namespace App\Domain\Invoices\Fbr;
 
 use App\Models\Company;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Thin, generic GET client for FBR's Digital Invoicing *Reference* APIs
@@ -47,10 +49,20 @@ class FbrHttpClient
         $url = rtrim((string) config('services.fbr.reference_base_url'), '/').'/'.ltrim($path, '/');
 
         try {
-            $response = Http::withToken($token)
+            $request = Http::withToken($token)
                 ->timeout((int) config('services.fbr.timeout', 30))
-                ->acceptJson()
-                ->get($url, $query);
+                ->acceptJson();
+
+            if ($path === 'v2/SaleTypeToRate') {
+                $request->retry(
+                    [250, 500],
+                    when: fn (Throwable $exception): bool => $exception instanceof RequestException
+                        && ($exception->response->serverError() || $exception->response->status() === 429),
+                    throw: false
+                );
+            }
+
+            $response = $request->get($url, $query);
         } catch (ConnectionException $e) {
             Log::error('FBR reference API unreachable', [
                 'path' => $path,
@@ -69,6 +81,7 @@ class FbrHttpClient
                 'path' => $path,
                 'query' => $query,
                 'status' => $response->status(),
+                'response_body' => substr(str_replace($token, '[REDACTED]', $response->body()), 0, 2000),
             ]);
 
             throw new FbrReferenceApiException(

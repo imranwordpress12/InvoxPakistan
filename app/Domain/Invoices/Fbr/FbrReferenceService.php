@@ -2,6 +2,7 @@
 
 namespace App\Domain\Invoices\Fbr;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
@@ -84,19 +85,21 @@ class FbrReferenceService
 
     /**
      * Transaction Type + origination province -> allowed Rate (Section
-     * 5.8). `date` is required by FBR's own query string (Section 5.8.1)
-     * — always pass the invoice date, not "today", since rates are
-     * date-sensitive.
+     * 5.8). `date` is required in `DD-MMM-YYYY` format by FBR's own
+     * query string (Section 5.8.1); always pass the invoice date, not
+     * "today", since rates are date-sensitive.
      *
      * @return array<int, array{ratE_ID: int, ratE_DESC: string, ratE_VALUE: float}>
      */
     public function saleTypeToRate(int $companyId, int $transTypeId, int $originationSupplier, string $date): array
     {
+        $formattedDate = Carbon::parse($date)->format('d-M-Y');
+
         return $this->rememberDependent(
             $companyId,
-            "sale_type_to_rate:{$transTypeId}:{$originationSupplier}:{$date}",
+            "sale_type_to_rate:{$transTypeId}:{$originationSupplier}:{$formattedDate}",
             fn () => $this->client->get($companyId, 'v2/SaleTypeToRate', [
-                'date' => $date,
+                'date' => $formattedDate,
                 'transTypeId' => $transTypeId,
                 'originationSupplier' => $originationSupplier,
             ])
@@ -151,7 +154,7 @@ class FbrReferenceService
         }
 
         foreach ($this->provinces($companyId) as $province) {
-            if (Str::lower((string) ($province['stateProvinceDesc'] ?? '')) === Str::lower($provinceName)) {
+            if (Str::lower(trim((string) ($province['stateProvinceDesc'] ?? ''))) === Str::lower(trim($provinceName))) {
                 return (int) $province['stateProvinceCode'];
             }
         }
@@ -176,7 +179,7 @@ class FbrReferenceService
         }
 
         foreach ($this->transactionTypes($companyId) as $type) {
-            if (Str::lower((string) ($type['transactioN_DESC'] ?? '')) === Str::lower($saleTypeName)) {
+            if (Str::lower(trim((string) ($type['transactioN_DESC'] ?? ''))) === Str::lower(trim($saleTypeName))) {
                 return (int) $type['transactioN_TYPE_ID'];
             }
         }
