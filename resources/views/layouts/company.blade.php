@@ -44,7 +44,7 @@
         </div>
     </nav>
 
-    <div class="d-flex flex-grow-1">
+    <div class="company-layout-shell d-flex flex-grow-1">
         <!-- Sidebar Navigation -->
         <nav class="offcanvas offcanvas-start company-sidebar border-end flex-shrink-0" style="width: 250px;" tabindex="-1" id="companySidebar" aria-labelledby="companySidebarLabel">
             <div class="offcanvas-header border-bottom">
@@ -115,8 +115,8 @@
         </nav>
 
         <!-- Main Content Area -->
-        <div class="flex-grow-1 d-flex flex-column bg-slate-50">
-            <main class="flex-grow-1 p-3 p-md-4">
+        <div class="company-page-content flex-grow-1 d-flex flex-column bg-slate-50">
+            <main class="company-page-main flex-grow-1 p-2 p-sm-3 p-lg-4">
                 @if (session('status'))
                     <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
                         <i class="bi bi-check-circle-fill me-2"></i> {{ session('status') }}

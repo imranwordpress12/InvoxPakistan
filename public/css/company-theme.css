@@ -29,9 +29,85 @@
 }
 
 body {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: var(--bg-page) !important;
     color: #334155;
+}
+
+html {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.company-layout-shell {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.company-page-content {
+    flex: 1 1 0%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.company-page-main {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+#invoice-form,
+#invoice-form .card,
+#invoice-form .card-body {
+    max-width: 100%;
+    min-width: 0;
+}
+
+@media (min-width: 576px) and (max-width: 1199.98px) {
+    #invoice-form .row > [class*="col-md-"] {
+        flex: 0 0 auto;
+        width: 50%;
+    }
+}
+
+.invoice-items-table-wrap {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.invoice-items-table {
+    width: max-content;
+    min-width: 100%;
+}
+
+@media (max-width: 767.98px) {
+    .invoice-items-table {
+        font-size: 0.75rem;
+    }
+
+    .invoice-items-table th,
+    .invoice-items-table td {
+        padding: 0.4rem 0.5rem;
+    }
+
+    .invoice-items-table thead th:first-child,
+    .invoice-items-table tbody td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        background-color: #ffffff;
+    }
+
+    .invoice-items-table thead th:first-child {
+        z-index: 3;
+        background-color: var(--table-head-bg);
+    }
 }
 
 h1, h2, h3, h4, h5, h6 {

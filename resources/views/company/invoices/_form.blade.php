@@ -71,6 +71,7 @@
     method="POST"
     action="{{ $invoice ? route('company.invoices.update', $invoice) : route('company.invoices.store') }}"
     id="invoice-form"
+    class="invoice-form"
     novalidate
 >
     @csrf
@@ -81,7 +82,7 @@
 
     <div class="card shadow-sm mb-3">
         <div class="card-header">Invoice Details</div>
-        <div class="card-body row g-3">
+        <div class="card-body row g-2 g-xl-3 p-2 p-md-3">
             <div class="col-md-4">
                 <label class="form-label">Customer (from master)</label>
                 <div class="position-relative">
@@ -245,8 +246,8 @@
             Item Details
             <i class="bi bi-info-circle" title="Add one or more items, then Save as Draft or Submit."></i>
         </div>
-        <div class="card-body">
-            <div class="row g-3">
+        <div class="card-body p-2 p-md-3">
+            <div class="row g-2 g-xl-3">
                 <div class="col-md-3">
                     <label class="form-label">Item (from master)</label>
                     <div class="position-relative">
@@ -412,8 +413,8 @@
                 </button>
             </div>
 
-            <div class="table-responsive mt-4">
-                <table class="table table-sm align-middle" id="items-table">
+            <div class="table-responsive invoice-items-table-wrap mt-4">
+                <table class="table table-sm align-middle invoice-items-table" id="items-table">
                     <thead>
                         <tr>
                             <th>Item</th>
@@ -455,7 +456,7 @@
         </div>
     </div>
 
-    <div class="d-flex gap-2">
+    <div class="d-flex flex-wrap gap-2">
         <button type="button" id="preview-btn" class="btn btn-soft-mint">Preview Invoice</button>
         <button type="submit" id="save-draft-btn" class="btn btn-soft-rose">Save as Draft</button>
         <button type="submit" id="submit-invoice-btn" class="btn btn-primary">Submit Invoice</button>
